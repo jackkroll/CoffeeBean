@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ shop.name }}</title>
+    <h3>{{ shop.name }}</h3>
+    <form action="/shop/delete" method="POST">
+         <input type="hidden" id="shopID" name="shopID" value="{{ shop.id }}">
+         <input type="submit" value="Delete Shop">
+    </form>
+
+    <form action="/shop/add-item" method="POST">
+        <input type="hidden" id="shopID-item" name="shopID" value="{{ shop.id }}">
+        <label for="itemName">Item Name: </label>
+            <input type="text" id="itemName" name="itemName">
+        <label for="itemPrice">Item Price: </label>
+            <input type="text" id="itemPrice" name="itemPrice">
+         <input type="submit" value="Add Item to Shop">
+    </form>
+    <ul>
+        {% for item in shopItems %}
+        <li>{{item.name}}</li>
+        {% endfor %}
+    </ul>
+</head>
+<body>
+
+</body>
+</html>

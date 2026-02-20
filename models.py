@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
-from typing import Optional
+from typing import Optional, Self
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 from extensions import db
@@ -16,6 +16,30 @@ class Shop(db.Model):
     name: Mapped[str]
     lat: Mapped[float]
     lon: Mapped[float]
+
+    def __init__(self, name: str, lat: float, lon: float):
+        self.id = str(uuid.uuid4())
+        self.name = name
+        self.lat = lat
+        self.lon = lon
+
+    @classmethod
+    def fromStrings(self, name: str, lat: str, lon: str) -> Self | None:
+        if lat == "" or lon == "":
+            return None
+        lat = float(lat)
+        lon = float(lon)
+
+        # Impossible location
+        if abs(lat) > 90:
+            return None
+        if abs(lon) > 180:
+            return None
+
+        return Shop(name=name, lat=lat, lon=lon)
+    def fetchItems(self, db: db.session):
+        items = db.query(Item).where(Shop.id == self.id)
+        return items
 
 class Review(db.Model):
     id: Mapped[str] = mapped_column(primary_key=True)
@@ -34,5 +58,24 @@ class ReviewField(db.Model):
 
 class Item(db.Model):
     id: Mapped[str] = mapped_column(primary_key=True)
+    shopID: Mapped[str] = mapped_column(ForeignKey('shop.id'))
     name: Mapped[str]
-    price: Mapped[float]
+    price: Mapped[Optional[float]]
+
+    def __init__(self, name: str, shopID: str, price: float | None):
+        self.id = str(uuid.uuid4())
+        self.name = name
+        self.shopID = shopID
+        self.price = price
+
+    @classmethod
+    def fromStrings(self, shopID: str, name: str, price: str) -> Self | None:
+        if shopID == "" or name == "":
+            return None
+        if price == "":
+            price = None
+        else:
+            price = float(price)
+            if price < 0:
+                return None
+        return Item(shopID=shopID, name=name, price=price)
