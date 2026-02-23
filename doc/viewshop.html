@@ -19,7 +19,9 @@
     </form>
     <ul>
         {% for item in shopItems %}
-        <li>{{item.name}}</li>
+        <li>{{item.name}}
+            <a href="{{ url_for('review', shopID = shop.id, itemID = item.id) }}">Submit Review</a>
+        </li>
         {% endfor %}
     </ul>
 </head>

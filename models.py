@@ -1,5 +1,7 @@
 import uuid
 from datetime import datetime
+from xmlrpc.client import DateTime
+
 from flask_sqlalchemy import SQLAlchemy
 from typing import Optional, Self
 from sqlalchemy import ForeignKey
@@ -23,6 +25,9 @@ class Shop(db.Model):
         self.lat = lat
         self.lon = lon
 
+    def __json__(self):
+        return {'id': self.id, 'name': self.name, 'lat': self.lat, 'lon': self.lon}
+
     @classmethod
     def fromStrings(self, name: str, lat: str, lon: str) -> Self | None:
         if lat == "" or lon == "":
@@ -43,10 +48,24 @@ class Shop(db.Model):
 
 class Review(db.Model):
     id: Mapped[str] = mapped_column(primary_key=True)
-    postDate: Mapped[int]  #Unix timestamp
+    postDate: Mapped[float]  #Unix timestamp
     posterID: Mapped[str] = mapped_column(ForeignKey('user.id'))
     attributedShopID: Mapped[str] = mapped_column(ForeignKey('shop.id'))
     attributedItemID: Mapped[str] = mapped_column(ForeignKey('item.id'))
+
+    def __init__(self, postDate: float, posterID: str, attributedShopID: str, attributedItemID: str):
+        self.id = str(uuid.uuid4())
+        self.postDate = postDate
+        self.posterID = posterID
+        self.attributedShopID = attributedShopID
+        self.attributedItemID = attributedItemID
+
+    @classmethod
+    def fromString(self, posterID: str, attributedShopID: str, attributedItemID: str) -> Self | None:
+        if posterID == "" or attributedShopID == "" or attributedItemID == "":
+            return None
+        return Review(datetime.now().timestamp(), posterID, attributedShopID, attributedItemID)
+
 
 class ReviewField(db.Model):
     parentID: Mapped[str] = mapped_column(ForeignKey('review.id'), primary_key=True)
@@ -55,6 +74,23 @@ class ReviewField(db.Model):
     upperRange: Mapped[int]
     value: Mapped[float]
     comment: Mapped[Optional[str]]
+
+    def __init__(self, parentID: str, fieldName: str, lowerRange: int, upperRange: int, value: float, comment: str | None):
+        self.parentID = parentID
+        self.fieldName = fieldName
+        self.lowerRange = lowerRange
+        self.upperRange = upperRange
+        self.value = value
+        self.comment = comment
+
+    @classmethod
+    def fromString(self, parentID: str, fieldName: str, lowerRange: str, upperRange: str, value: str, comment: str | None):
+        if parentID == "" or fieldName == "":
+            return None
+        lowerRange = int(lowerRange)
+        upperRange = int(upperRange)
+        value = float(value)
+        return ReviewField(parentID, fieldName, lowerRange, upperRange, value, comment)
 
 class Item(db.Model):
     id: Mapped[str] = mapped_column(primary_key=True)

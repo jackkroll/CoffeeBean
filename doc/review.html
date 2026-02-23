@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Review Shop</title>
+    <ul>
+        {% for review in shopReviews %}
+        <li>{{review.lowerRange}} -- {{review.value}} -- {{review.upperRange}}</li>
+        {% endfor %}
+    </ul>
+  <form action="/review" method="POST">
+        <input type="hidden" id="shopID" name="shopID" value="{{ shop.id }}">
+        <input type="hidden" id="itemID" name="itemID" value="{{ item.id }}">
+        <label for="value">Bitterness Ranking:</label>
+          <input type="number" id="value" name="value">
+    <br>
+        <label for="comment">Comments:</label>
+               <input type="text", id="comment", name="comment">
+    <br>
+    <input type="submit" value="Submit">
+    </form>
+</head>
+<body>
+
+</body>
+</html>
