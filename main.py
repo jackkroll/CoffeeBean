@@ -5,9 +5,11 @@ from flask import Flask, send_from_directory, request, Response, redirect, url_f
 from flask_sqlalchemy import SQLAlchemy
 from extensions import db
 from sqlalchemy.orm import DeclarativeBase
+from flask_cors import CORS
 app = Flask(__name__, template_folder='doc')
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///project.db"
 db.init_app(app)
+CORS(app); #fix later as this is bad practice
 
 with app.app_context():
     db.create_all()
@@ -27,6 +29,10 @@ def shops():
     else:
         shop = fetchShopById(db.session, shopID)
         return render_template("viewshop.html", shop = shop, shopItems = shop.fetchItems(db.session))
+
+@app.route("/map")
+def map():
+    return render_template("map.html")
 
 @app.route("/review/<shopID>")
 def review(shopID):
@@ -114,6 +120,8 @@ def location_fetch():
     minDist = request.args.get("minDist")
     if maxDist == '':
         maxDist = None
+    else:
+        maxDist = int(maxDist)
     if minDist == '':
         minDist = None
     if maxDist is not None and minDist is not None and maxDist < minDist:

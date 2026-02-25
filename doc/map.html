@@ -1,0 +1,130 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+              integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+              crossorigin=""/>
+        <style>
+            #map { height: 90vh; }
+        </style>
+        <title>Map - CoffeeBean</title>
+    </head>
+    <body>
+    <div id="map">
+
+    </div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+    <script>
+        let map;
+
+        function onMapClick(e) {
+            var popup = L.popup();
+            popup
+                .setLatLng(e.latlng)
+                .setContent("<a href='/shop/add?lat="+e.latlng.lat+"&lon="+e.latlng.lng+"'>Add new shop here</a>")
+                .openOn(map);
+        }
+
+        function updateMap(e) {
+            var curLat;
+            var curLon;
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(async function(position) {
+                    curLat = position.coords.latitude
+                    curLon = position.coords.longitude
+                    var urlString;
+                    urlString = "http://127.0.0.1:5000/api/locationsearch?lat=" + curLat + "&lon=" + curLon + "&maxDist=5"
+                    fetchLocations(urlString).then(function(res) {
+                        for(let i = 0; i < res.length; i++) {
+                            let dist = res[i][0];
+                            let name = res[i][1].name;
+                            let lat = res[i][1].lat
+                            let lon = res[i][1].lon
+                            let id = res[i][1].id
+                            var marker = L.marker([lat, lon]).addTo(map);
+                            marker.bindPopup("<b>"+name+"</b><br>Distance: "+dist+" miles<br><a href='http://127.0.0.1:5000/shop?shopID="+id+"'>View shop</a>");
+                        }
+
+                    })
+                }, function() {
+                    console.log("No location!");
+                    curLat = map.getCenter().lat
+                    curLon = map.getCenter().lng
+                    var urlString;
+                    urlString = "http://127.0.0.1:5000/api/locationsearch?lat=" + curLat + "&lon=" + curLon + "&maxDist=5"
+                    fetchLocations(urlString).then(function(res) {
+                        for(let i = 0; i < res.length; i++) {
+                            let dist = res[i][0];
+                            let name = res[i][1].name;
+                            let lat = res[i][1].lat
+                            let lon = res[i][1].lon
+                            let id = res[i][1].id
+                            var marker = L.marker([lat, lon]).addTo(map);
+                            marker.bindPopup("<b>"+name+"</b><br>Distance: "+dist+" miles<br><a href='http://127.0.0.1:5000/shop?shopID="+id+"'>View shop</a>");
+                        }
+
+                    })
+                });
+
+
+            } else {
+                curLat = map.getCenter().lat
+                curLon = map.getCenter().lng
+                var urlString;
+                urlString = "http://127.0.0.1:5000/api/locationsearch?lat=" + curLat + "&lon=" + curLon + "&maxDist=5"
+                fetchLocations(urlString).then(function(res) {
+                    for(let i = 0; i < res.length; i++) {
+                        let dist = res[i][0];
+                        let name = res[i][1].name;
+                        let lat = res[i][1].lat
+                        let lon = res[i][1].lon
+                        let id = res[i][1].id
+                        var marker = L.marker([lat, lon]).addTo(map);
+                        marker.bindPopup("<b>"+name+"</b><br>Distance: "+dist+" miles<br><a href='http://127.0.0.1:5000/shop?shopID="+id+"'>View shop</a>");
+                    }
+
+                })
+            }
+
+
+
+
+        }
+
+
+
+
+        async function fetchLocations(url) {
+            const resp = await fetch(url);
+            if (resp.ok) {
+                return resp.json();
+            } else {
+                return -1;
+            }
+        }
+
+        window.onload = function() {
+            map = L.map('map').setView([47.12170928392314, -88.56322646141052], 13);
+            map.on('click', onMapClick);
+
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
+
+            if ("geolocation" in navigator) {
+
+                map.locate({setView:true})
+                //map.zoomOut();
+            } else {
+                /* geolocation IS NOT available */
+            }
+            map.on('zoomend', updateMap);
+            map.on('moveend', updateMap);
+
+
+        }
+    </script>
+    </body>
+</html>
