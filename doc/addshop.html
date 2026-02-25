@@ -18,6 +18,12 @@
 
 </head>
 <body>
-
+    <script>
+        const shopLon = document.getElementById("shopLon");
+        const shopLat = document.getElementById("shopLat");
+        const urlParams = new URLSearchParams(window.location.search);
+        shopLat.value = urlParams.get("lat");
+        shopLon.value = urlParams.get("lon");
+    </script>
 </body>
 </html>
