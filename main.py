@@ -1,4 +1,7 @@
 from traceback import print_stack
+
+from sqlalchemy.exc import IntegrityError
+
 from helpers import *
 from models import *
 from flask import Flask, send_from_directory, request, Response, redirect, url_for, render_template, session
@@ -13,7 +16,7 @@ with app.app_context():
     db.create_all()
 @app.route("/")
 def landing_page():
-    return "Landing Page!"
+    return render_template("landing.html")
 
 @app.route("/shop")
 def shops():
@@ -51,17 +54,23 @@ def add_review():
     review = Review.fromString(posterID, shopID, itemID)
     reviewField = ReviewField.fromString(review.id, fieldName, lowerRange, upperRange, value, comment)
 
-    db.session.add(review)
-    db.session.add(reviewField)
-    db.session.commit()
+    try:
+        db.session.add(review)
+        db.session.add(reviewField)
+        db.session.commit()
+    except IntegrityError:
+        return Response("Error Adding Review to DB", status=500, mimetype='application/json')
     return redirect(url_for("review", shopID = shopID, itemID = itemID,shopReviews = fetchReviews(db.session, shopId = shopID, itemId= itemID)) )
 
 @app.route("/shop/delete", methods = ["POST"])
 def delete_shop():
-    shopID = request.form.get("shopID")
-    shop = fetchShopById(db.session, shopID)
-    db.session.delete(shop)
-    db.session.commit()
+    try:
+        shopID = request.form.get("shopID")
+        shop = fetchShopById(db.session, shopID)
+        db.session.delete(shop)
+        db.session.commit()
+    except IntegrityError:
+        return Response("Error Deleting Shop from DB", status=500, mimetype='application/json')
     return redirect(url_for("shops"))
 @app.route("/shop/add", methods=["GET", "POST"])
 def add_shop():
@@ -99,8 +108,7 @@ def add_item():
             db.session.add(newItem)
             db.session.commit()
             return redirect(url_for("shops", shopID = newItem.shopID))
-        except Exception as e:
-            print(e)
+        except IntegrityError as e:
             return Response("Error saving to database", status=500, mimetype='application/json')
 
 @app.route("/api/locationsearch", methods=["GET"])

@@ -87,9 +87,16 @@ class ReviewField(db.Model):
     def fromString(self, parentID: str, fieldName: str, lowerRange: str, upperRange: str, value: str, comment: str | None):
         if parentID == "" or fieldName == "":
             return None
-        lowerRange = int(lowerRange)
-        upperRange = int(upperRange)
+        try:
+            lowerRange = int(lowerRange)
+            upperRange = int(upperRange)
+        except ValueError:
+            return None
+        if lowerRange > upperRange:
+            return None
         value = float(value)
+        if value < lowerRange or value > upperRange:
+            return None
         return ReviewField(parentID, fieldName, lowerRange, upperRange, value, comment)
 
 class Item(db.Model):

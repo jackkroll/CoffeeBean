@@ -41,3 +41,12 @@ def test_reviewfield_fromString_casts_types():
     assert field.lowerRange == 0
     assert field.upperRange == 5
     assert field.value == 3.5
+
+
+def test_reviewField_fromString_range_values():
+    field = ReviewField.fromString("parentShop", "bitterness", "10", "0", "3", "ok")
+    assert field is None
+    field = ReviewField.fromString("parentShop", "bitterness", "0", "10", "11", "ok")
+    assert field is None
+
+
