@@ -25,6 +25,8 @@ def fetchReviews(db: db.session, shopId: str, itemId: str) -> [ReviewField]:
 def fetchShopsByDistance(db: db.session, lat: float, lon: float, maxDistance: float | None = None, minDistance: float | None = None) -> [(float,Shop)]:
     shops = db.query(Shop).all()
     distanceShops = []
+    if maxDistance is not None and minDistance is not None and minDistance > maxDistance:
+        return []
     for shop in shops:
         distance = geodesic((lat, lon), (shop.lat, shop.lon)).miles
         if maxDistance is not None and distance > maxDistance:

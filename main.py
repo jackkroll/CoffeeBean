@@ -52,14 +52,18 @@ def add_review():
     shopID = request.form.get("shopID")
     itemID = request.form.get("itemID")
     fieldName = "bitterness"
-    lowerRange = "0"
-    upperRange = "5"
+    lowerRange = 0
+    upperRange = 5
     value = request.form.get("value")
     comment = request.form.get("comment")
-
+    try:
+        value = float(value)
+    except ValueError:
+        return Response("Value must be numerical", status=400, mimetype='application/json')
+    if value < lowerRange or value > upperRange:
+        return Response("Value out of range", status=400, mimetype='application/json')
     review = Review.fromString(posterID, shopID, itemID)
-    reviewField = ReviewField.fromString(review.id, fieldName, lowerRange, upperRange, value, comment)
-
+    reviewField = ReviewField.fromString(review.id, fieldName, str(lowerRange), str(upperRange), str(value), comment)
     try:
         db.session.add(review)
         db.session.add(reviewField)

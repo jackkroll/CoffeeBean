@@ -1,5 +1,20 @@
 from models import Shop, Item, Review, ReviewField
 
+def seed_shops(db_session):
+    shops = [
+        Shop.fromStrings("Biggby", "47.1217117", "-88.5635648"),
+        Shop.fromStrings("Camp Coffee", "46.7449659", "-88.4358324"),
+        Shop.fromStrings("Prickly Pine", "47.1219535", "-88.5672185"),
+    ]
+    db_session.add_all(shops)
+    items = [
+        Item.fromStrings(str(shops[0].id), "Cookie", "3"),
+        Item.fromStrings(str(shops[0].id), "Latte", "5"),
+        Item.fromStrings(str(shops[1].id), "Water", "0")
+    ]
+    db_session.add_all(items)
+    db_session.commit()
+    return [shops, items]
 
 def test_shop_fromStrings_valid():
     shop = Shop.fromStrings("Cafe", "45.0", "-93.0")
@@ -50,3 +65,12 @@ def test_reviewField_fromString_range_values():
     assert field is None
 
 
+def test_fetchItems(db_session):
+    shopsAndItems = seed_shops(db_session)
+    biggbyItems = shopsAndItems[0][0].fetchItems(db_session)
+    campCoffeeItems = shopsAndItems[0][1].fetchItems(db_session)
+    pricklyPineItems = shopsAndItems[0][2].fetchItems(db_session)
+
+    assert len(biggbyItems) == 2
+    assert len(campCoffeeItems) == 1
+    assert len(pricklyPineItems) == 0

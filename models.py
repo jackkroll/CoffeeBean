@@ -43,7 +43,7 @@ class Shop(db.Model):
 
         return Shop(name=name, lat=lat, lon=lon)
     def fetchItems(self, db: db.session):
-        items = db.query(Item).where(Shop.id == self.id)
+        items = db.query(Item).where(Item.shopID == self.id).all()
         return items
 
 class Review(db.Model):

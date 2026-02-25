@@ -75,6 +75,8 @@ def test_fetchShopsByDistance(db_session):
     assert len(distanceShops) == (len(shops) - 1)
     distanceShops = fetchShopsByDistance(db_session, testLat, testLon, maxDistance=10, minDistance=9)
     assert len(distanceShops) == 0
+    distanceShops = fetchShopsByDistance(db_session, testLat, testLon, maxDistance=0, minDistance=5)
+    assert len(distanceShops) == 0
 
 def test_serialization(db_session):
     shops = seed_shops(db_session)
