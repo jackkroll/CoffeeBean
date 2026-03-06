@@ -3,29 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <title>{{ shop.name }}</title>
+    <style>
+        li > * {
+            margin:1px;
+        }
+    </style>
+</head>
+<body>
     <h3>{{ shop.name }}</h3>
-    <form action="/shop/delete" method="POST">
-         <input type="hidden" id="shopID" name="shopID" value="{{ shop.id }}">
-         <input type="submit" value="Delete Shop">
-    </form>
-
-    <form action="/shop/add-item" method="POST">
-        <input type="hidden" id="shopID-item" name="shopID" value="{{ shop.id }}">
-        <label for="itemName">Item Name: </label>
-            <input type="text" id="itemName" name="itemName">
-        <label for="itemPrice">Item Price: </label>
-            <input type="text" id="itemPrice" name="itemPrice">
-         <input type="submit" value="Add Item to Shop">
-    </form>
+    <h4>Items:</h4>
     <ul>
         {% for item in shopItems %}
-        <li>{{item.name}}
-            <a href="{{ url_for('review', shopID = shop.id, itemID = item.id) }}">Submit Review</a>
+        <li>{{item.name}} - $NULL
+            <p>BeanRating: NULL</p> <!--idk how to fetch price or review from item so ill circle back to this since i'm just doing basic UI stuff rn-->
+            <a href="{{ url_for('review', shopID = shop.id, itemID = item.id) }}">Reviews...</a>
+            <br><br>
         </li>
         {% endfor %}
     </ul>
-</head>
-<body>
-
+    <h4>Don't see an item? Help others by adding it!</h4>
+    <form action="/shop/add-item" method="POST">
+        <input type="hidden" id="shopID-item" name="shopID" value="{{ shop.id }}">
+        <label for="itemName">Item Name: </label>
+        <input type="text" id="itemName" name="itemName">
+        <label for="itemPrice">Item Price: </label>
+        <input type="text" id="itemPrice" name="itemPrice">
+        <input type="submit" value="Add Item to Shop">
+    </form>
+    <br><br>
+    <form action="/shop/delete" method="POST">
+        <input type="hidden" id="shopID" name="shopID" value="{{ shop.id }}">
+        <input type="submit" value="Delete Shop">
+    </form>
 </body>
 </html>
