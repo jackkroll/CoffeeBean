@@ -17,19 +17,19 @@
 </head>
 <body>
     <div id="title">
-        <h2>BeanRatings for [ITEMNAME]</h2>
-        <h4>at [SHOPNAME]</h4>
+        <h2>BeanRatings for {{ item.name }}</h2>
+        <h4>at {{ shop.name }}</h4>
     </div>
     <ul>
         {% for review in shopReviews %}
         <li>
             <p>{{review.lowerRange}} -- {{review.value}} -- {{review.upperRange}}</p>
-            <p>"[REVIEWCOMMENTHERE]"</p>
+            <p>{{ review.comment }}</p>
             <br>
         </li>
         {% endfor %}
     </ul>
-    <h4>Add your review for [ITEMNAME]!</h4>
+    <h4>Add your review for {{ item.name }}!</h4>
     <form action="/review" method="POST">
         <input type="hidden" id="shopID" name="shopID" value="{{ shop.id }}">
         <input type="hidden" id="itemID" name="itemID" value="{{ item.id }}">
