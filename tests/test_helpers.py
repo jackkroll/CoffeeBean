@@ -42,7 +42,7 @@ def test_fetchItemById_returns_item(db_session):
 
 
 def test_fetchReviews_returns_review_fields(db_session):
-    user = User(id="user-1", username="tester", passwordHash="hash")
+    user = User(username="tester", email="test@testing.com", passwordHash="hash")
     shop = Shop.fromStrings("Biggby", "47.1217117", "-88.5635648")
     db_session.add_all([user, shop])
     db_session.commit()
