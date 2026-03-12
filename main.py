@@ -1,7 +1,6 @@
 from traceback import print_stack
 
 from sqlalchemy.exc import IntegrityError
-
 from helpers import *
 from models import *
 from flask import Flask, send_from_directory, request, Response, redirect, url_for, render_template, session
@@ -9,13 +8,32 @@ from flask_sqlalchemy import SQLAlchemy
 from extensions import db
 from sqlalchemy.orm import DeclarativeBase
 from flask_cors import CORS
+import os
+from dotenv import load_dotenv
+from flask_login import login_user, current_user, logout_user, login_required
+
+load_dotenv()
 app = Flask(__name__, template_folder='doc')
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///project.db"
+app.secret_key = os.getenv("FLASK_SECRET")
+login_manager = flask_login.LoginManager()
+login_manager.init_app(app)
 db.init_app(app)
 CORS(app); #fix later as this is bad practice
 
 with app.app_context():
     db.create_all()
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(user_id)
+
+@login_manager.request_loader
+def request_loader(request):
+    id = request.form.get("id")
+    if id is None:
+        return None
+    return User.query.get(id)
 @app.route("/")
 def landing_page():
     return render_template("landing.html")
@@ -47,8 +65,9 @@ def review(shopID):
     return render_template("review.html", item = item, shop = shop, shopReviews = fetchReviews(db.session, shopId = shop.id, itemId= item.id))
 
 @app.route("/review", methods=["POST"])
+@login_required
 def add_review():
-    posterID = "0"
+    posterID = current_user.id
     shopID = request.form.get("shopID")
     itemID = request.form.get("itemID")
     fieldName = "bitterness"
@@ -73,6 +92,7 @@ def add_review():
     return redirect(url_for("review", shopID = shopID, itemID = itemID,shopReviews = fetchReviews(db.session, shopId = shopID, itemId= itemID)) )
 
 @app.route("/shop/delete", methods = ["POST"])
+@login_required
 def delete_shop():
     try:
         shopID = request.form.get("shopID")
@@ -83,6 +103,7 @@ def delete_shop():
         return Response("Error Deleting Shop from DB", status=500, mimetype='application/json')
     return redirect(url_for("shops"))
 @app.route("/shop/add", methods=["GET", "POST"])
+@login_required
 def add_shop():
     if request.method == "GET":
         return send_from_directory("doc", "addshop.html")
@@ -93,7 +114,7 @@ def add_shop():
         if shopName is None or shopLatRaw is None or shopLonRaw is None:
             return Response("Not all fields returned", status=400, mimetype='application/json')
         else:
-            newShop = Shop.fromStrings(shopName, shopLatRaw, shopLonRaw)
+            newShop = Shop.fromStrings(shopName, shopLatRaw, shopLonRaw, current_user.id)
             if newShop is None:
                 return Response("Fields invalid", status=400, mimetype='application/json')
             try:
@@ -104,6 +125,7 @@ def add_shop():
                 return Response("Error saving to database", status=500, mimetype='application/json')
 
 @app.route("/shop/add-item", methods=["POST"])
+@login_required
 def add_item():
     shopID = request.form.get("shopID")
     itemName = request.form.get("itemName")
@@ -111,7 +133,7 @@ def add_item():
     if itemName == '' or shopID == '':
         return Response("Not all fields returned", status=400, mimetype='application/json')
     else:
-        newItem = Item.fromStrings(shopID, itemName, itemPrice)
+        newItem = Item.fromStrings(shopID, itemName, itemPrice, current_user.id)
         if newItem is None:
             return Response("Fields invalid", status=400, mimetype='application/json')
         try:
@@ -141,6 +163,46 @@ def location_fetch():
     distanceShops = fetchShopsByDistance(db.session, lat, lon, maxDist, minDist)
     jsonText = encode_shops_by_dist(distanceShops)
     return Response(jsonText, status=200, mimetype='application/json')
+
+@app.route("/create-account", methods =["GET", "POST"])
+def create_account():
+    if request.method == "GET":
+        if current_user.is_authenticated:
+            return redirect(url_for("landing_page"))
+        return send_from_directory("doc", "create-account.html")
+    else:
+        username = request.form.get("username")
+        email = request.form.get("email")
+        password = request.form.get("password")
+        user = User.fromStrings(username, email, password)
+        db.session.add(user)
+        db.session.commit()
+        login_user(user)
+        return redirect(url_for("landing_page"))
+
+@app.route("/login", methods = ["GET", "POST"])
+def login():
+    if request.method == "GET":
+        return send_from_directory("doc", "login.html")
+    else:
+        username = request.form.get("username")
+        password = request.form.get("password")
+        user = loginUser(db.session, username, bytes(password, "utf-8"))
+        if user is None:
+            return "Invalid"
+        else:
+            login_user(user)
+            return redirect(url_for("landing_page"))
+
+@app.route("/logout", methods = ["GET"])
+def logout():
+    logout_user()
+    return "ok!"
+@app.route("/protected")
+@login_required
+def protected():
+    return "logged in as:" + flask_login.current_user.id
+
 
 if __name__ == "__main__":
     app.run(debug=True)

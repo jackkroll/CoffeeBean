@@ -1,7 +1,20 @@
 from extensions import db
+import bcrypt
 import json
 from models import *
 from geopy.distance import geodesic
+
+def loginUser(db: db.session, username: str, password: bytes) -> User | None:
+    user = db.query(User).where(User.username == username).first()
+    if user is None:
+        return None
+    hash = user.passwordHash.encode("utf-8")
+    if bcrypt.checkpw(password, hash):
+        return user
+    else:
+        return None
+
+
 
 def fetchAllShops(db : db.session) -> [Shop]:
     allShops = db.query(Shop).all()
@@ -39,4 +52,3 @@ def fetchShopsByDistance(db: db.session, lat: float, lon: float, maxDistance: fl
 
 def encode_shops_by_dist(distanceShops: [(float, Shop)]) -> str:
     return json.dumps(distanceShops, default=lambda o: o.__json__() if hasattr(o, '__json__') else None)
-

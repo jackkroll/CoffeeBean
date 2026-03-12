@@ -1,27 +1,46 @@
 import uuid
+
+import bcrypt
+import flask_login
+from flask_login import login_manager
 from datetime import datetime
 from xmlrpc.client import DateTime
-
 from flask_sqlalchemy import SQLAlchemy
 from typing import Optional, Self
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 from extensions import db
 
-class User(db.Model):
+class User(flask_login.UserMixin, db.Model):
     id: Mapped[str] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(unique=True)
+    email: Mapped[str]
     passwordHash: Mapped[str]
+
+    def __init__(self, username, email, passwordHash):
+        self.id = str(uuid.uuid4())
+        self.username = username
+        self.email = email
+        self.passwordHash = passwordHash
+
+    @classmethod
+    def fromStrings(self, name: str, email: str, password: str):
+        # Validate!
+        passwordHash=bcrypt.hashpw(bytes(password, "utf-8"), bcrypt.gensalt()).decode("utf-8")
+        return User(name, email, passwordHash)
 
 class Shop(db.Model):
     id: Mapped[str] = mapped_column(primary_key=True)
     name: Mapped[str]
+    posterID: Mapped[Optional[str]] = mapped_column(ForeignKey('user.id'))
     lat: Mapped[float]
     lon: Mapped[float]
 
-    def __init__(self, name: str, lat: float, lon: float):
+
+    def __init__(self, name: str, lat: float, lon: float, posterID: str | None = None):
         self.id = str(uuid.uuid4())
         self.name = name
+        self.posterID = posterID
         self.lat = lat
         self.lon = lon
 
@@ -29,7 +48,7 @@ class Shop(db.Model):
         return {'id': self.id, 'name': self.name, 'lat': self.lat, 'lon': self.lon}
 
     @classmethod
-    def fromStrings(self, name: str, lat: str, lon: str) -> Self | None:
+    def fromStrings(self, name: str, lat: str, lon: str, posterID: str | None = None) -> Self | None:
         if lat == "" or lon == "":
             return None
         lat = float(lat)
@@ -41,7 +60,7 @@ class Shop(db.Model):
         if abs(lon) > 180:
             return None
 
-        return Shop(name=name, lat=lat, lon=lon)
+        return Shop(name=name, lat=lat, lon=lon, posterID=posterID)
     def fetchItems(self, db: db.session):
         items = db.query(Item).where(Item.shopID == self.id).all()
         return items
@@ -102,17 +121,19 @@ class ReviewField(db.Model):
 class Item(db.Model):
     id: Mapped[str] = mapped_column(primary_key=True)
     shopID: Mapped[str] = mapped_column(ForeignKey('shop.id'))
+    posterID: Mapped[Optional[str]] = mapped_column(ForeignKey('user.id'))
     name: Mapped[str]
     price: Mapped[Optional[float]]
 
-    def __init__(self, name: str, shopID: str, price: float | None):
+    def __init__(self, name: str, shopID: str, price: float | None, posterID: str | None = None):
         self.id = str(uuid.uuid4())
         self.name = name
+        self.posterID = posterID
         self.shopID = shopID
         self.price = price
 
     @classmethod
-    def fromStrings(self, shopID: str, name: str, price: str) -> Self | None:
+    def fromStrings(self, shopID: str, name: str, price: str, posterID: str | None = None) -> Self | None:
         if shopID == "" or name == "":
             return None
         if price == "":
@@ -121,4 +142,4 @@ class Item(db.Model):
             price = float(price)
             if price < 0:
                 return None
-        return Item(shopID=shopID, name=name, price=price)
+        return Item(shopID=shopID, name=name, price=price, posterID=posterID)

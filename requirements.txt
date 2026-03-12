@@ -4,3 +4,5 @@ geopy~=2.4.1
 pytest~=9.0.2
 SQLAlchemy~=2.0.46
 flask-cors~=6.0.2
+Flask-Login~=0.6.3
+bcrypt~=5.0.0
