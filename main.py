@@ -26,14 +26,14 @@ with app.app_context():
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(user_id)
+    return db.session.get(User, user_id)
 
 @login_manager.request_loader
 def request_loader(request):
     id = request.form.get("id")
     if id is None:
         return None
-    return User.query.get(id)
+    return db.session.get(User, id)
 @app.route("/")
 def landing_page():
     return render_template("landing.html")
@@ -174,6 +174,8 @@ def create_account():
         username = request.form.get("username")
         email = request.form.get("email")
         password = request.form.get("password")
+        if username is None or email is None or password is None:
+            return Response("Fields invalid", status=400, mimetype='application/json')
         user = User.fromStrings(username, email, password)
         db.session.add(user)
         db.session.commit()
@@ -187,12 +189,56 @@ def login():
     else:
         username = request.form.get("username")
         password = request.form.get("password")
-        user = loginUser(db.session, username, bytes(password, "utf-8"))
+        if username is None or password is None:
+            return Response("Fields invalid", status=400, mimetype='application/json')
+        user = loginUser(db.session, username, password)
         if user is None:
-            return "Invalid"
+            return Response("Username or Password incorrect", status=400, mimetype='application/json')
         else:
             login_user(user)
             return redirect(url_for("landing_page"))
+@app.route('/change-password', methods = ["GET", "POST"])
+@login_required
+def change_password():
+    if request.method == "GET":
+        return send_from_directory("doc", "change-password.html")
+    else:
+        oldPassword = request.form.get("oldPassword")
+        newPassword = request.form.get("newPassword")
+        newPasswordConf = request.form.get("newPasswordConf")
+        print(oldPassword, newPassword, newPasswordConf)
+        if oldPassword == None or newPassword == None or newPasswordConf == None:
+            return Response("Fields invalid", status=400, mimetype='application/json')
+        if newPassword != newPasswordConf:
+            return Response("Passwords don't match", status=400, mimetype='application/json')
+        if loginUser(db.session, current_user.username, oldPassword) == None:
+            return Response("Incorrect old password", status=400, mimetype='application/json')
+        else:
+            current_user.changePassword(newPassword)
+            db.session.commit()
+            return redirect(url_for("landing_page"))
+
+@app.route('/delete-account', methods = ["GET", "POST"])
+@login_required
+def delete_account():
+    if request.method == "GET":
+        return send_from_directory("doc", "delete-account.html")
+    else:
+        password = request.form.get("password")
+        cleanupPref = request.form.get("contentCleanup")
+        if password is None:
+            return Response("Password not provided", status=400, mimetype='application/json')
+        if cleanupPref is None:
+            return Response("Post deletion content preference not provided", status=400, mimetype='application/json')
+        if loginUser(db.session, current_user.username, password) == None:
+            return Response("Password Incorrect", status=400, mimetype='application/json')
+        db.session.delete(current_user)
+        wipeShopAndItemPoster(db.session, current_user.id)
+        if cleanupPref == "anonymize":
+            anonymizeReviewFor(db.session, current_user.id)
+        else:
+            deleteReviewFor(db.session, current_user.id)
+        return redirect(url_for("landing_page"))
 
 @app.route("/logout", methods = ["GET"])
 def logout():
