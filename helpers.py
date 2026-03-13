@@ -4,7 +4,8 @@ import json
 from models import *
 from geopy.distance import geodesic
 
-def loginUser(db: db.session, username: str, password: bytes) -> User | None:
+def loginUser(db: db.session, username: str, password: str) -> User | None:
+    password = bytes(password, "utf-8")
     user = db.query(User).where(User.username == username).first()
     if user is None:
         return None
@@ -52,3 +53,22 @@ def fetchShopsByDistance(db: db.session, lat: float, lon: float, maxDistance: fl
 
 def encode_shops_by_dist(distanceShops: [(float, Shop)]) -> str:
     return json.dumps(distanceShops, default=lambda o: o.__json__() if hasattr(o, '__json__') else None)
+
+def wipeShopAndItemPoster(db: db.session, posterID: str):
+    for shop in db.query(Shop).filter(Shop.posterID ==posterID):
+        shop.posterID = None
+    for item in db.query(Item).filter(Item.posterID ==posterID):
+        item.posterID = None
+    db.commit()
+
+def anonymizeReviewFor(db: db.session, posterID: str):
+    for review in db.query(Review).filter(Review.posterID == posterID):
+        review.posterID = None
+    db.commit()
+
+def deleteReviewFor(db: db.session, posterID: str):
+    for review in db.query(Review).filter(Review.posterID == posterID):
+        for reviewField in review.fetchReviewFields(db):
+            db.delete(reviewField)
+        db.delete(review)
+    db.commit()

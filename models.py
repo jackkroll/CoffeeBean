@@ -23,6 +23,9 @@ class User(flask_login.UserMixin, db.Model):
         self.email = email
         self.passwordHash = passwordHash
 
+    def changePassword(self, password):
+        self.passwordHash=bcrypt.hashpw(bytes(password, "utf-8"), bcrypt.gensalt()).decode("utf-8")
+
     @classmethod
     def fromStrings(self, name: str, email: str, password: str):
         # Validate!
@@ -68,7 +71,7 @@ class Shop(db.Model):
 class Review(db.Model):
     id: Mapped[str] = mapped_column(primary_key=True)
     postDate: Mapped[float]  #Unix timestamp
-    posterID: Mapped[str] = mapped_column(ForeignKey('user.id'))
+    posterID: Mapped[Optional[str]] = mapped_column(ForeignKey('user.id'))
     attributedShopID: Mapped[str] = mapped_column(ForeignKey('shop.id'))
     attributedItemID: Mapped[str] = mapped_column(ForeignKey('item.id'))
 
@@ -78,6 +81,9 @@ class Review(db.Model):
         self.posterID = posterID
         self.attributedShopID = attributedShopID
         self.attributedItemID = attributedItemID
+
+    def fetchReviewFields(self, db: db.session):
+        return db.query(ReviewField).filter(ReviewField.parentID == self.id)
 
     @classmethod
     def fromString(self, posterID: str, attributedShopID: str, attributedItemID: str) -> Self | None:
