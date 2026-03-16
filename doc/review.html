@@ -13,6 +13,9 @@
         h4 {
             margin:3px;
         }
+        .ratingStats {
+            margin:0;
+        }
     </style>
 </head>
 <body>
@@ -20,6 +23,16 @@
         <h2>BeanRatings for {{ item.name }}</h2>
         <h4>at {{ shop.name }}</h4>
     </div>
+    <br>
+    <h4>Average Bitterness Rating: {{averageRating}}</h4>
+    {% for rank in dist %}
+    <p class="ratingStats">
+        {{ loop.index - 1 }}:
+        {% for x in range( ((rank / revCount) * 20) | int ) %}
+        *
+        {% endfor %}
+    </p>
+    {% endfor %}
     <ul>
         {% for review in shopReviews %}
         <li>
