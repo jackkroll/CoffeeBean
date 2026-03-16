@@ -62,7 +62,9 @@ def review(shopID):
     item = fetchItemById(db.session, itemID)
     if shop == None or item == None or item.shopID != shopID:
         return Response("Item and Shop Mismatch", status=400, mimetype='application/json')
-    return render_template("review.html", item = item, shop = shop, shopReviews = fetchReviews(db.session, shopId = shop.id, itemId= item.id))
+    shopReviews = fetchReviews(db.session, shopId = shop.id, itemId= item.id)
+    distribution, avg, revCount = getReviewStatistics(shopReviews)
+    return render_template("review.html", item = item, shop = shop, shopReviews = shopReviews, averageRating = avg, dist = distribution, revCount = revCount)
 
 @app.route("/review", methods=["POST"])
 @login_required
