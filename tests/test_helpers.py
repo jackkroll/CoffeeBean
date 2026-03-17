@@ -59,7 +59,7 @@ def test_fetchReviews_returns_review_fields(db_session):
     db_session.add(field)
     db_session.commit()
 
-    reviews = fetchReviews(db_session, shopId=shop.id, itemId=item.id)
+    reviews = fetchFieldsFor(db_session, shopId=shop.id, itemId=item.id, type="bitterness")
     assert len(reviews) == 1
     assert reviews[0].value == 4.0
 

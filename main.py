@@ -62,7 +62,7 @@ def review(shopID):
     item = fetchItemById(db.session, itemID)
     if shop == None or item == None or item.shopID != shopID:
         return Response("Item and Shop Mismatch", status=400, mimetype='application/json')
-    shopReviews = fetchReviews(db.session, shopId = shop.id, itemId= item.id)
+    shopReviews = fetchFieldsFor(db.session, shopId = shop.id, itemId= item.id, type = "bitterness")
     distribution, avg, revCount = getReviewStatistics(shopReviews)
     return render_template("review.html", item = item, shop = shop, shopReviews = shopReviews, averageRating = avg, dist = distribution, revCount = revCount)
 
@@ -91,7 +91,7 @@ def add_review():
         db.session.commit()
     except IntegrityError:
         return Response("Error Adding Review to DB", status=500, mimetype='application/json')
-    return redirect(url_for("review", shopID = shopID, itemID = itemID,shopReviews = fetchReviews(db.session, shopId = shopID, itemId= itemID)) )
+    return redirect(url_for("review", shopID = shopID, itemID = itemID,shopReviews = fetchFieldsFor(db.session, shopId = shopID, itemId= itemID, type = "bitterness")) )
 
 @app.route("/shop/delete", methods = ["POST"])
 @login_required
@@ -166,31 +166,70 @@ def location_fetch():
     jsonText = encode_shops_by_dist(distanceShops)
     return Response(jsonText, status=200, mimetype='application/json')
 
+@app.route("/api/username-taken", methods=["GET"])
+def username_taken():
+    username = request.args.get("username")
+    if username is None:
+        return Response("No username provided", status=400, mimetype='application/json')
+    else:
+        isTaken = usernameIsTaken(db.session, username)
+        return Response(str(isTaken), status=200, mimetype='application/json')
+
+@app.route("/api/password-valid", methods=["GET"])
+def password_valid():
+    # Must have 6 characters, 1 uppercase, 1 lowercase, and one symbol/number
+    password = request.args.get("password")
+    if password is None:
+        return Response("No password provided", status=400, mimetype='application/json')
+    else:
+        isValid = passwordIsValid(password)
+        return Response(str(isValid), status=200, mimetype='application/json')
+
 @app.route("/create-account", methods =["GET", "POST"])
 def create_account():
     if request.method == "GET":
+        returnTo = request.args.get("returnTo")
         if current_user.is_authenticated:
-            return redirect(url_for("landing_page"))
-        return send_from_directory("doc", "create-account.html")
+            if returnTo is None:
+                return redirect(url_for("landing_page"))
+            else:
+                return redirect(returnTo)
+        return render_template("create-account.html", returnTo = returnTo)
     else:
         username = request.form.get("username")
         email = request.form.get("email")
         password = request.form.get("password")
+        returnTo = request.form.get("returnTo")
         if username is None or email is None or password is None:
             return Response("Fields invalid", status=400, mimetype='application/json')
+        if not passwordIsValid(password):
+            return Response("Password must contain at least 6 characters, 1 uppercase, 1 lowercase, and one symbol/number", status=400, mimetype='application/json')
         user = User.fromStrings(username, email, password)
-        db.session.add(user)
-        db.session.commit()
-        login_user(user)
-        return redirect(url_for("landing_page"))
+        try:
+            db.session.add(user)
+            db.session.commit()
+            login_user(user)
+        except IntegrityError as e:
+            return Response("Username already taken", status=400, mimetype='application/json')
+        if returnTo is None:
+            return redirect(url_for("landing_page"))
+        else:
+            return redirect(returnTo)
 
 @app.route("/login", methods = ["GET", "POST"])
 def login():
     if request.method == "GET":
-        return send_from_directory("doc", "login.html")
+        returnTo = request.args.get("returnTo")
+        if current_user.is_authenticated:
+            if returnTo is None:
+                return redirect(url_for("landing_page"))
+            else:
+                return redirect(returnTo)
+        return render_template("login.html", returnTo = returnTo)
     else:
         username = request.form.get("username")
         password = request.form.get("password")
+        returnTo = request.form.get("returnTo")
         if username is None or password is None:
             return Response("Fields invalid", status=400, mimetype='application/json')
         user = loginUser(db.session, username, password)
@@ -198,7 +237,10 @@ def login():
             return Response("Username or Password incorrect", status=400, mimetype='application/json')
         else:
             login_user(user)
-            return redirect(url_for("landing_page"))
+            if returnTo is None:
+                return redirect(url_for("landing_page"))
+            else:
+                return redirect(returnTo)
 @app.route('/change-password', methods = ["GET", "POST"])
 @login_required
 def change_password():
@@ -250,6 +292,14 @@ def logout():
 @login_required
 def protected():
     return "logged in as:" + flask_login.current_user.id
+
+@app.errorhandler(401)
+def unauthorized_page(e):
+    return (render_template("401.html",
+                           loginURL = url_for("login", returnTo = request.path),
+                           signupURL = url_for("create_account", returnTo = request.path)),
+            401)
+
 
 
 if __name__ == "__main__":

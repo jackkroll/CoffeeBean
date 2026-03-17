@@ -7,6 +7,9 @@
 <body>
 <h4>Create your CoffeeBean account to post reviews!!</h4>
     <form action="/create-account" method="POST">
+        {% if returnTo is not none %}
+        <input type="hidden", name="returnTo", value="{{returnTo}}">
+        {% endif %}
         <label for="username">Username:</label>
         <input type="text" id="username" name="username">
         <br>

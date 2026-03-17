@@ -7,6 +7,9 @@
 <body>
 <h4>Login to your CofeeBean account</h4>
     <form action="/login" method="POST">
+        {% if returnTo is not none %}
+        <input type="hidden" name="returnTo" value="{{ returnTo }}">
+        {% endif %}
         <label for="username">Username:</label>
         <input type="text" id="username" name="username">
         <br>

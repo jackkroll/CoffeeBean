@@ -3,6 +3,7 @@ import bcrypt
 import json
 from models import *
 from geopy.distance import geodesic
+import re
 
 def loginUser(db: db.session, username: str, password: str) -> User | None:
     password = bytes(password, "utf-8")
@@ -27,14 +28,17 @@ def fetchItemById(db: db.session, itemId: str) -> Item | None:
     item = db.get(Item, itemId)
     return item if item else None
 
-def fetchReviews(db: db.session, shopId: str, itemId: str) -> [ReviewField]:
-    fetchedReviews = []
+def fetchFieldsFor(db: db.session, shopId: str, itemId: str, type: str, afterDate: DateTime = None) -> [ReviewField]:
+    fetchedFields = []
     reviews = db.query(Review).where(Review.attributedShopID == shopId, Review.attributedItemID == itemId).all()
     for review in reviews:
-        field = db.get(ReviewField, (review.id, "bitterness"))
+        # If post date is older than the cutoff
+        if afterDate is not None and review.postDate < afterDate:
+            continue
+        field = db.get(ReviewField, (review.id, type))
         if field is not None:
-            fetchedReviews.append(field)
-    return fetchedReviews
+            fetchedFields.append(field)
+    return fetchedFields
 
 def fetchShopsByDistance(db: db.session, lat: float, lon: float, maxDistance: float | None = None, minDistance: float | None = None) -> [(float,Shop)]:
     shops = db.query(Shop).all()
@@ -96,3 +100,10 @@ def deleteReviewFor(db: db.session, posterID: str):
             db.delete(reviewField)
         db.delete(review)
     db.commit()
+
+def usernameIsTaken(db: db.session, username: str) -> bool:
+    return len(db.query(User).filter(User.username == username).all()) >= 1
+
+def passwordIsValid(password: str) -> bool:
+    matches = re.findall(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z]).{6,}$", password)
+    return len(matches) > 0
