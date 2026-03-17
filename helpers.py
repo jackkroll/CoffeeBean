@@ -57,27 +57,17 @@ def fetchShopsByDistance(db: db.session, lat: float, lon: float, maxDistance: fl
 
 def getReviewStatistics(shopReviews):
     total = 0
-    counter = 0
-    distribution = [0, 0, 0, 0, 0, 0]
+    if len(shopReviews) > 0:
+        # - 1 because inclusive of lower range
+        distribution = [0] * ((shopReviews[0].upperRange - (shopReviews[0].lowerRange - 1)))
+    else:
+        return None, None, None
     for review in shopReviews:
         total += review.value
-        counter += 1
         cur = round(review.value)
-        match cur:
-            case 0:
-                distribution[0] += 1
-            case 1:
-                distribution[1] += 1
-            case 2:
-                distribution[2] += 1
-            case 3:
-                distribution[3] += 1
-            case 4:
-                distribution[4] += 1
-            case 5:
-                distribution[5] += 1
-    avg = total / counter
-    return distribution, avg, counter
+        distribution[cur] += 1
+    avg = total / len(shopReviews)
+    return distribution, avg, len(shopReviews)
 
 def encode_shops_by_dist(distanceShops: [(float, Shop)]) -> str:
     return json.dumps(distanceShops, default=lambda o: o.__json__() if hasattr(o, '__json__') else None)

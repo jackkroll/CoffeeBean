@@ -24,6 +24,7 @@
         <h4>at {{ shop.name }}</h4>
     </div>
     <br>
+    {% if dist is not none %}
     <h4>Average Bitterness Rating: {{averageRating}}</h4>
     {% for rank in dist %}
     <p class="ratingStats">
@@ -33,6 +34,7 @@
         {% endfor %}
     </p>
     {% endfor %}
+    {% endif %}
     <ul>
         {% for review in shopReviews %}
         <li>
