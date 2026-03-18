@@ -202,7 +202,7 @@
         window.onload = function() {
             lastlat = 47.12170928392314;
             lastlon = -88.56322646141052;
-            map = L.map('map').setView([47.12170928392314, -88.56322646141052], 13);
+            map = L.map('map').setView([47.12170928392314, -88.56322646141052], 15);
             map.on('click', onMapClick);
 
             L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -212,7 +212,11 @@
 
             if ("geolocation" in navigator) {
 
-                map.locate({setView:true})
+                map.locate({
+                    setView:true,
+                    maxZoom: 15
+                })
+
                 //map.zoomOut();
             } else {
                 /* geolocation IS NOT available */
