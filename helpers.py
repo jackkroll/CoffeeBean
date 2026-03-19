@@ -65,7 +65,7 @@ def getReviewStatistics(shopReviews):
     for review in shopReviews:
         total += review.value
         cur = round(review.value)
-        distribution[cur] += 1
+        distribution[cur - shopReviews[0].lowerRange] += 1
     avg = total / len(shopReviews)
     return distribution, avg, len(shopReviews)
 
