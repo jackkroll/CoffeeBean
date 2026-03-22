@@ -49,7 +49,10 @@ def shops():
         return output
     else:
         shop = fetchShopById(db.session, shopID)
-        return render_template("viewshop.html", shop = shop, shopItems = shop.fetchItems(db.session))
+        if shop is None:
+            return Response("Shop does not exist", status=500, mimetype='application/json')
+        else:
+            return render_template("viewshop.html", shop = shop, shopItems = shop.fetchItems(db.session))
 
 @app.route("/map")
 def map():
@@ -296,8 +299,8 @@ def protected():
 @app.errorhandler(401)
 def unauthorized_page(e):
     return (render_template("401.html",
-                           loginURL = url_for("login", returnTo = request.path),
-                           signupURL = url_for("create_account", returnTo = request.path)),
+                           loginURL = url_for("login", returnTo = request.url),
+                           signupURL = url_for("create_account", returnTo = request.url)),
             401)
 
 
