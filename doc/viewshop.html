@@ -14,9 +14,9 @@
     <h4>Items:</h4>
     <ul>
         {% for item in shopItems %}
-        <li>{{item.name}} - $NULL
-            <p>BeanRating: NULL</p> <!--idk how to fetch price or review from item so ill circle back to this since i'm just doing basic UI stuff rn-->
-            <a href="{{ url_for('review', shopID = shop.id, itemID = item.id) }}">Reviews...</a>
+        <li>{{item.name}} - ${{ "%0.2f" % item.price }}
+            <p>BeanRating: {{ avgList[item] }}</p> <!--idk how to fetch price or review from item so ill circle back to this since i'm just doing basic UI stuff rn-->
+            <a href="{{ url_for('review', shopID = shop.id, itemID = item.id) }}">See reviews...</a>
             <br><br>
         </li>
         {% endfor %}
