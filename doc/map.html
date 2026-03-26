@@ -20,6 +20,7 @@
         let lastlat;
         let lastlon;
         var markers = [];
+        const maxDistance = 15;
 
         function distCoords(lat1, lon1, lat2, lon2) {
             const R = 6371e3; // metres
@@ -46,7 +47,6 @@
         }
 
         function markerPlace(res, curlat, curlon) {
-                console.log(res);
                 let dist
                 let lat = res[1].lat
                 let lon = res[1].lon
@@ -75,28 +75,31 @@
         }
 
         function updateMap(e) {
-            centerLat = map.getBounds().getCenter().lat
-            centerLon = map.getBounds().getCenter().lng
-            boundLat = map.getBounds().getNorthEast().lat
-            boundLon = map.getBounds().getNorthEast().lng
+            var centerLat = map.getBounds().getCenter().lat
+            var centerLon = map.getBounds().getCenter().lng
+            var boundLat = map.getBounds().getNorthEast().lat
+            var boundLon = map.getBounds().getNorthEast().lng
             distance = distCoords(centerLat, centerLon, boundLat, boundLon)
-
-            urlString = "{{ url_for('location_fetch') }}" + "?lat=" + centerLat + "&lon=" + centerLon + "&maxDist=" + Math.trunc(distance)
+            if (distance > maxDistance) {
+                return;
+            }
+            urlString = "{{ url_for('location_fetch') }}" + "?lat=" + centerLat + "&lon=" + centerLon + "&maxDist=" + distance
             fetchLocations(urlString).then(function (res) {
+                if (res !== -1) {
+                    if ("geolocation" in navigator) {
 
-                if ("geolocation" in navigator) {
-
-                    navigator.geolocation.getCurrentPosition(function(pos) {
-                        let curlat = pos.coords.latitude;
-                        let curlon = pos.coords.longitude;
-                        for (let i = 0; i < res.length; i++) {
-                            markerPlace(res[i], curlat, curlon);
-                        }
-                    }, function () {
-                        for (let i = 0; i < res.length; i++) {
-                            markerPlace(res[i], null, null);
-                        }
-                    })
+                        navigator.geolocation.getCurrentPosition(function (pos) {
+                            let curlat = pos.coords.latitude;
+                            let curlon = pos.coords.longitude;
+                            for (let i = 0; i < res.length; i++) {
+                                markerPlace(res[i], curlat, curlon);
+                            }
+                        }, function () {
+                            for (let i = 0; i < res.length; i++) {
+                                markerPlace(res[i], null, null);
+                            }
+                        })
+                    }
                 }
             })
         }

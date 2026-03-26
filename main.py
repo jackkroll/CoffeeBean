@@ -20,6 +20,7 @@ login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 db.init_app(app)
 CORS(app); #fix later as this is bad practice
+MAXDISTANCE = 15 # max distance value
 
 with app.app_context():
     db.create_all()
@@ -166,7 +167,9 @@ def location_fetch():
     if maxDist == '':
         maxDist = None
     else:
-        maxDist = int(maxDist)
+        maxDist = float(maxDist)
+        if (maxDist > MAXDISTANCE):
+            return Response("Distance too large", status=400, mimetype='application/json')
     if minDist == '':
         minDist = None
     if maxDist is not None and minDist is not None and maxDist < minDist:
