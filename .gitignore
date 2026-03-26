@@ -208,3 +208,6 @@ __marimo__/
 
 # CoffeeBean Specific
 .DS_Store
+doc/.idea/
+/doc/.idea
+doc/.idea/doc.iml
