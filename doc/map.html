@@ -66,6 +66,7 @@
                     if (mlat == lat && mlon == lon) {
                         found = true;
                     }
+                    //TODO: may also be worth deleting any that are outside bounds
                 })
                 if (!found) {
                     var marker = L.marker([lat, lon]).addTo(map);
