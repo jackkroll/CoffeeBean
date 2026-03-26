@@ -69,8 +69,8 @@ def getReviewStatistics(shopReviews): # TODO: contrain args by type
     avg = total / len(shopReviews)
     return distribution, avg, len(shopReviews)
 
-def getItemAverageRating(item): #TODO: contrain args by type
-    shopReviews = fetchFieldsFor(db.session, shopId = item.shopID, itemId= item.id, type = "bitterness")
+def getItemAverageRating(item, reviewType): #TODO: contrain args by type
+    shopReviews = fetchFieldsFor(db.session, shopId = item.shopID, itemId= item.id, type = reviewType)
     distribution, avg, revCount = getReviewStatistics(shopReviews)
     return avg
 
