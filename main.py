@@ -52,7 +52,13 @@ def shops():
         if shop is None:
             return Response("Shop does not exist", status=500, mimetype='application/json')
         else:
-            return render_template("viewshop.html", shop = shop, shopItems = shop.fetchItems(db.session))
+            shopItems = shop.fetchItems(db.session)
+            avgList = dict()
+            reviewType = "bitterness"
+            for item in shopItems:
+                avgList[item] = getItemAverageRating(item, reviewType)
+            print(avgList)
+            return render_template("viewshop.html", shop = shop, shopItems = shopItems, avgList = avgList)
 
 @app.route("/map")
 def map():

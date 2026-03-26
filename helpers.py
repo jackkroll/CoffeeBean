@@ -55,7 +55,7 @@ def fetchShopsByDistance(db: db.session, lat: float, lon: float, maxDistance: fl
     distanceShops.sort(key=lambda x: x[0])
     return distanceShops
 
-def getReviewStatistics(shopReviews):
+def getReviewStatistics(shopReviews): # TODO: contrain args by type
     total = 0
     if len(shopReviews) > 0:
         # - 1 because inclusive of lower range
@@ -68,6 +68,11 @@ def getReviewStatistics(shopReviews):
         distribution[cur - shopReviews[0].lowerRange] += 1
     avg = total / len(shopReviews)
     return distribution, avg, len(shopReviews)
+
+def getItemAverageRating(item, reviewType): #TODO: contrain args by type
+    shopReviews = fetchFieldsFor(db.session, shopId = item.shopID, itemId= item.id, type = reviewType)
+    distribution, avg, revCount = getReviewStatistics(shopReviews)
+    return avg
 
 def encode_shops_by_dist(distanceShops: [(float, Shop)]) -> str:
     return json.dumps(distanceShops, default=lambda o: o.__json__() if hasattr(o, '__json__') else None)

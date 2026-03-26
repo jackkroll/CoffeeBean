@@ -19,9 +19,8 @@
         let map;
         let lastlat;
         let lastlon;
-        let cursearchdist = 5;
+        var markers = [];
 
-        //TODO: this is fine for now but I feel we should use the bounds and not the center
         function distCoords(lat1, lon1, lat2, lon2) {
             const R = 6371e3; // metres
             const c1 = lat1 * Math.PI/180; // φ, λ in radians
@@ -34,161 +33,73 @@
                 Math.sin(dl/2) * Math.sin(dl/2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 
-            const d = R * c;
-            return d; // in metres
+            const d = R * c; //in metres
+            return d/1609; // in miles
         }
 
         function onMapClick(e) {
             var popup = L.popup();
             popup
                 .setLatLng(e.latlng)
-                .setContent("<a href='/shop/add?lat="+e.latlng.lat+"&lon="+e.latlng.lng+"'>Add new shop here</a>")
+                .setContent("<a href='{{url_for('add_shop')}}?lat="+e.latlng.lat+"&lon="+e.latlng.lng+"'>Add new shop here</a>")
                 .openOn(map);
         }
 
-        function updateMapForce() {
-            var curLat;
-            var curLon;
-            if ("geolocation" in navigator) {
-                navigator.geolocation.getCurrentPosition(async function(position) {
-                    curLat = map.getCenter().lat
-                    curLon = map.getCenter().lng
-                    lastlat = position.coords.latitude
-                    lastlon = position.coords.longitude
-                    var urlString;
-                    urlString = "http://127.0.0.1:5000/api/locationsearch?lat=" + curLat + "&lon=" + curLon + "&maxDist=" + cursearchdist
-                    fetchLocations(urlString).then(function (res) {
-                        for (let i = 0; i < res.length; i++) {
-                            let dist = res[i][0];
-                            let name = res[i][1].name;
-                            let lat = res[i][1].lat
-                            let lon = res[i][1].lon
-                            let id = res[i][1].id
-                            var marker = L.marker([lat, lon]).addTo(map);
-                            marker.bindPopup("<b>" + name + "</b><br>Distance: " + dist + " miles<br><a href='http://127.0.0.1:5000/shop?shopID=" + id + "'>View shop</a>");
-                        }
+        function markerPlace(res, curlat, curlon) {
+                console.log(res);
+                let dist
+                let lat = res[1].lat
+                let lon = res[1].lon
 
-                    })
-                }, function() {
-                    console.log("No location!");
-                    curLat = map.getCenter().lat
-                    curLon = map.getCenter().lng
-                    var urlString;
-                    urlString = "http://127.0.0.1:5000/api/locationsearch?lat=" + curLat + "&lon=" + curLon + "&maxDist=" + cursearchdist
-                    fetchLocations(urlString).then(function (res) {
-                        for (let i = 0; i < res.length; i++) {
-                            let dist = res[i][0];
-                            let name = res[i][1].name;
-                            let lat = res[i][1].lat
-                            let lon = res[i][1].lon
-                            let id = res[i][1].id
-                            var marker = L.marker([lat, lon]).addTo(map);
-                            marker.bindPopup("<b>" + name + "</b><br>Distance: " + dist + " miles<br><a href='http://127.0.0.1:5000/shop?shopID=" + id + "'>View shop</a>");
-                        }
-
-                    })
-                });
-
-
-            } else {
-                curLat = map.getCenter().lat
-                curLon = map.getCenter().lng
-                var urlString;
-                urlString = "http://127.0.0.1:5000/api/locationsearch?lat=" + curLat + "&lon=" + curLon + "&maxDist=" + cursearchdist
-                fetchLocations(urlString).then(function (res) {
-                    for (let i = 0; i < res.length; i++) {
-                        let dist = res[i][0];
-                        let name = res[i][1].name;
-                        let lat = res[i][1].lat
-                        let lon = res[i][1].lon
-                        let id = res[i][1].id
-                        var marker = L.marker([lat, lon]).addTo(map);
-                        marker.bindPopup("<b>" + name + "</b><br>Distance: " + dist + " miles<br><a href='http://127.0.0.1:5000/shop?shopID=" + id + "'>View shop</a>");
+                if (curlat != null && curlon != null) {
+                    dist = distCoords(curlat, curlon, lat, lon)
+                } else {
+                    dist = res[0];
+                }
+                let name = res[1].name;
+                let id = res[1].id
+                var found = false;
+                //i would not do this if it weren't for the fact i tried every other way i could think of and it gave me issues
+                markers.forEach(oldmarker => {
+                    let mlat = oldmarker.getLatLng().lat
+                    let mlon = oldmarker.getLatLng().lng
+                    if (mlat == lat && mlon == lon) {
+                        found = true;
                     }
-
                 })
-            }
+                if (!found) {
+                    var marker = L.marker([lat, lon]).addTo(map);
+                    marker.bindPopup("<b>" + name + "</b><br>Distance: " + dist.toFixed(1) + " miles<br><a href='{{ url_for('shops') }}?shopID=" + id + "'>View shop</a>");
+                    markers.push(marker)
+                }
         }
 
         function updateMap(e) {
-            var curLat;
-            var curLon;
-            if ("geolocation" in navigator) {
-                navigator.geolocation.getCurrentPosition(async function(position) {
-                    curLat = map.getCenter().lat
-                    curLon = map.getCenter().lng
-                    lastlat = position.coords.latitude
-                    lastlon = position.coords.longitude
-                    if (distCoords(curLat, curLon, lastlat, lastlon) > (cursearchdist * 1609)) {
-                        var urlString;
-                        urlString = "http://127.0.0.1:5000/api/locationsearch?lat=" + curLat + "&lon=" + curLon + "&maxDist=" + cursearchdist
-                        fetchLocations(urlString).then(function (res) {
-                            for (let i = 0; i < res.length; i++) {
-                                let dist = res[i][0];
-                                let name = res[i][1].name;
-                                let lat = res[i][1].lat
-                                let lon = res[i][1].lon
-                                let id = res[i][1].id
-                                var marker = L.marker([lat, lon]).addTo(map);
-                                marker.bindPopup("<b>" + name + "</b><br>Distance: " + dist + " miles<br><a href='http://127.0.0.1:5000/shop?shopID=" + id + "'>View shop</a>");
-                            }
+            centerLat = map.getBounds().getCenter().lat
+            centerLon = map.getBounds().getCenter().lng
+            boundLat = map.getBounds().getNorthEast().lat
+            boundLon = map.getBounds().getNorthEast().lng
+            distance = distCoords(centerLat, centerLon, boundLat, boundLon)
 
-                        })
-                        cursearchdist += 5
-                    }
-                }, function() {
-                    console.log("No location!");
-                    curLat = map.getCenter().lat
-                    curLon = map.getCenter().lng
-                    if (distCoords(curLat, curLon, lastlat, lastlon) > (cursearchdist * 1609)) {
-                        var urlString;
-                        urlString = "http://127.0.0.1:5000/api/locationsearch?lat=" + curLat + "&lon=" + curLon + "&maxDist=" + cursearchdist
-                        fetchLocations(urlString).then(function (res) {
-                            for (let i = 0; i < res.length; i++) {
-                                let dist = res[i][0];
-                                let name = res[i][1].name;
-                                let lat = res[i][1].lat
-                                let lon = res[i][1].lon
-                                let id = res[i][1].id
-                                var marker = L.marker([lat, lon]).addTo(map);
-                                marker.bindPopup("<b>" + name + "</b><br>Distance: " + dist + " miles<br><a href='http://127.0.0.1:5000/shop?shopID=" + id + "'>View shop</a>");
-                            }
+            urlString = "{{ url_for('location_fetch') }}" + "?lat=" + centerLat + "&lon=" + centerLon + "&maxDist=" + Math.trunc(distance)
+            fetchLocations(urlString).then(function (res) {
 
-                        })
-                        cursearchdist += 5
-                    }
-                });
+                if ("geolocation" in navigator) {
 
-
-            } else {
-                curLat = map.getCenter().lat
-                curLon = map.getCenter().lng
-                if (distCoords(curLat, curLon, lastlat, lastlon) > (cursearchdist * 1609)) {
-                    var urlString;
-                    urlString = "http://127.0.0.1:5000/api/locationsearch?lat=" + curLat + "&lon=" + curLon + "&maxDist=" + cursearchdist
-                    fetchLocations(urlString).then(function (res) {
+                    navigator.geolocation.getCurrentPosition(function(pos) {
+                        let curlat = pos.coords.latitude;
+                        let curlon = pos.coords.longitude;
                         for (let i = 0; i < res.length; i++) {
-                            let dist = res[i][0];
-                            let name = res[i][1].name;
-                            let lat = res[i][1].lat
-                            let lon = res[i][1].lon
-                            let id = res[i][1].id
-                            var marker = L.marker([lat, lon]).addTo(map);
-                            marker.bindPopup("<b>" + name + "</b><br>Distance: " + dist + " miles<br><a href='http://127.0.0.1:5000/shop?shopID=" + id + "'>View shop</a>");
+                            markerPlace(res[i], curlat, curlon);
                         }
-
+                    }, function () {
+                        for (let i = 0; i < res.length; i++) {
+                            markerPlace(res[i], null, null);
+                        }
                     })
-                    cursearchdist += 5
                 }
-            }
-
-
-
-
+            })
         }
-
-
-
 
         async function fetchLocations(url) {
             const resp = await fetch(url);
@@ -204,7 +115,6 @@
             lastlon = -88.56322646141052;
             map = L.map('map').setView([47.12170928392314, -88.56322646141052], 15);
             map.on('click', onMapClick);
-
             L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -217,13 +127,12 @@
                     maxZoom: 15
                 })
 
-                //map.zoomOut();
-            } else {
-                /* geolocation IS NOT available */
             }
+
+            updateMap();
             map.on('zoomend', updateMap);
             map.on('moveend', updateMap);
-            updateMapForce();
+
 
         }
     </script>
