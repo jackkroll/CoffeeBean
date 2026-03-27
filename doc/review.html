@@ -2,59 +2,112 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Review Shop</title>
-    <style>
-        #title > *{
-            margin:1px;
-        }
-        li > *{
-            margin:1px;
-        }
-        h4 {
-            margin:3px;
-        }
-        .ratingStats {
-            margin:0;
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoffeeBean - Find Your Perfect Cup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    {% macro render_rating(rating, gradient_prefix='rating') %}
+        {% for i in range(5) %}
+            {% set p = [1, [rating - i, 0] | max] | min %}
+            {% with p=p, idx=i, gradient_prefix=gradient_prefix %}
+                {% include 'bean.svg' %}
+            {% endwith %}
+        {% endfor %}
+    {% endmacro %}
 </head>
-<body>
-    <div id="title">
-        <h2>BeanRatings for {{ item.name }}</h2>
-        <h4>at {{ shop.name }}</h4>
+<body class="bg-gray-200 p-2 flex flex-col items-stretch justify-center min-h-screen w-full max-w-3xl mx-auto">
+    <div class="flex flex-col gap-x-3 w-full min-h-sm items-stretch justify-center sm:flex-row">
+  <div id="title" class="bg-white rounded-2xl p-8 flex flex-col text-center items-center justify-center md:w-1/3 sm:w-full">
+        <h2 class="text-xl font-bold">BeanRatings for {{ item.name }}</h2>
+        <h4 class="text-md font-normal">at {{ shop.name }}</h4>
     </div>
     <br>
-    {% if dist is not none %}
-    <h4>Average Bitterness Rating: {{averageRating}}</h4>
-    {% for rank in dist %}
-    <p class="ratingStats">
-        {{ loop.index - 1 }}:
-        {% for x in range( ((rank / revCount) * 20) | int ) %}
-        *
+   <div class="bg-gray-200 p-5 bg-white rounded-2xl w-full text-center content-center space-y-2 gap-y-2 md:w-2/3 sm:w-full">
+        <h5 class="text-lg font-semibold">Bitterness Rating</h5>
+        <div class="flex flex-grow flex-row items-center max-w-xs gap-2 max-w-full m-auto">
+            {% if averageRating is not none %}
+            {{ render_rating(averageRating, 'overall-' ~ item.id) }}
+            {% else %}
+            <h3 class="text-lg">No ratings yet</h3>
+            {% endif %}
+        </div>
+       <button onclick="openModal()" class="bg-amber-700 p-3 rounded-xl text-center text-white font-bold m-2 w-full">
+           Add your rating!
+       </button>
+   </div>
+   </div>
+    <br>
+    <div class="bg-white rounded-2xl p-5 space-y-2 max-w-fill gap-2">
+    <h5 class="text-lg font-semibold ">What others are saying:</h5>
+        {% if shopReviews | selectattr('comment') | list | length == 0 %}
+            <h4 class="text-lg">No comments yet!</h4>
+        {% endif %}
+        {% for review in shopReviews | selectattr('comment')%}
+    <div class="flex flex-row max-h-xs bg-gray-200 rounded-2xl p-5 space-y-2 max-w-fill gap-2">
+        <div class=" hidden sm:block max-h-fill max-w-20">
+            {% set fill = "#dd72e0" %}
+            {% with fill=fill %}
+                {% include 'person.svg'%}
+            {% endwith %}
+        </div>
+        <div class="flex flex-col max-h-xs max-w-full">
+            <div class="flex-row">
+            <h6 class="text-sm font-bold">Username</h6>
+            <div class="flex flex-grow flex-row items-center w-fit gap-2 h-5">
+            {{ render_rating(review.value, 'review-' ~ review.parentID) }}
+            </div>
+        </div>
+            <p class="h-fit w-fill text-sm max-w-xl">
+                {{ review.comment }}
+            </p>
+        </div>
+    </div>
         {% endfor %}
-    </p>
-    {% endfor %}
-    {% endif %}
-    <ul>
-        {% for review in shopReviews %}
-        <li>
-            <p>{{review.lowerRange}} -- {{review.value}} -- {{review.upperRange}}</p>
-            <p>{{ review.comment }}</p>
-            <br>
-        </li>
-        {% endfor %}
-    </ul>
-    <h4>Add your review for {{ item.name }}!</h4>
-    <form action="/review" method="POST">
-        <input type="hidden" id="shopID" name="shopID" value="{{ shop.id }}">
-        <input type="hidden" id="itemID" name="itemID" value="{{ item.id }}">
-        <label for="value">Bitterness Ranking:</label>
-        <input type="number" id="value" name="value">
-        <br>
-        <label for="comment">Comments:</label>
-        <input type="text", id="comment", name="comment">
-        <br>
-        <input type="submit" value="Submit">
-    </form>
+    </div>
+
+<!-- Modal Form -->
+<div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-xl p-6 w-11/12 max-w-md">
+    <h2 class="text-lg font-bold mb-2">Add your review for {{ item.name }}!</h2>
+        <div class="bg-white rounded-2xl p-4 flex flex-col text-center items-center justify-center w-full m-auto">
+            <form class= "w-full" action="/review" method="POST">
+                <input type="hidden" id="shopID" name="shopID" value="{{ shop.id }}">
+                <input type="hidden" id="itemID" name="itemID" value="{{ item.id }}">
+                <div class="text-start m-auto w-full">
+                    <label for="value" class="text-md">Bitterness Ranking:</label>
+                </div>
+                <input id="value" name="value" type="range" min="0" max="5" value="2.5" step="0.1" class="w-full accent-amber-800">
+                <br>
+                <div class="text-start m-auto w-full">
+                    <label for="comment">Comments:</label>
+                </div>
+                <textarea
+                id="comment"
+                name="comment"
+                rows="6"
+                class="block p-4 w-full text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-lg"
+                placeholder="Leave a comment (optional)"
+              ></textarea>
+                <br>
+                <input class="bg-amber-700 p-3 rounded-xl text-center text-white font-bold w-full" type="submit" value="Submit">
+            </form>
+            <button onclick="closeModal()" class="bg-gray-300 p-3 rounded-xl text-center text-black font-bold m-2 w-full">
+                Cancel
+            </button>
+
+        </div>
+  </div>
+</div>
+
+<script>
+  function openModal() {
+    document.getElementById('modal').classList.remove('hidden');
+    document.getElementById('modal').classList.add('flex');
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.add('hidden');
+    document.getElementById('modal').classList.remove('flex');
+  }
+</script>
 </body>
 </html>
