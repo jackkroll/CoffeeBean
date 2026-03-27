@@ -3,7 +3,10 @@ import bcrypt
 import json
 from models import *
 from geopy.distance import geodesic
-import re2 as re
+try:
+    import re2 as re
+except (ImportError, ModuleNotFoundError) as e:
+    import re
 
 def loginUser(db: db.session, username: str, password: str) -> User | None:
     password = bytes(password, "utf-8")
