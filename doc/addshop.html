@@ -2,28 +2,158 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
-    <form method="POST">
-        <label for="shopName">Shop name:</label><br>
-        <input type="text" id="shopName" name="shopName"><br>
-        <div id="shopLocation">
-        <label for="shopLat">Latitude: </label>
-            <input type="text" id="shopLat" name="shopLat">
-
-        <label for="shopLon">Longitude: </label>
-            <input type="text" id="shopLon" name="shopLon">
-        </div>
-        <input type="submit" value="Submit">
-    </form>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Coffee Shop - CoffeeBean</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #78350f 0%, #d97706 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        body::before {
+            content: '☕ ☕ ☕ ☕ ☕ ☕ ☕ ☕ ☕ ☕ ☕ ☕ ☕ ☕ ☕ ☕ ☕ ☕ ☕ ☕';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            font-size: 60px;
+            opacity: 0.05;
+            line-height: 100px;
+            word-wrap: break-word;
+            z-index: 0;
+            pointer-events: none;
+        }
+    </style>
 </head>
-<body>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="relative z-10 w-full max-w-md">
+        <!-- Card -->
+        <div class="bg-white rounded-2xl shadow-2xl p-8">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-amber-900 mb-2">Add Coffee Shop</h1>
+                <p class="text-gray-600">Help the community discover new spots!</p>
+            </div>
+
+            <!-- Error message (if passed from Flask) -->
+            {% if error %}
+            <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-red-700 text-sm">{{ error }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Success message (if passed from Flask) -->
+            {% if success %}
+            <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <p class="text-green-700 text-sm">{{ success }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Form -->
+            <form method="POST" class="space-y-6">
+                <!-- Shop Name -->
+                <div>
+                    <label for="shopName" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Shop Name <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="shopName"
+                        name="shopName"
+                        required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition"
+                        placeholder="e.g., Blue Bottle Coffee">
+                </div>
+
+                <!-- Location Info Box -->
+                <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div class="flex items-start mb-3">
+                        <svg class="w-5 h-5 text-amber-700 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                        </svg>
+                        <div class="flex-1">
+                            <h3 class="text-sm font-semibold text-amber-900 mb-1">Location Coordinates</h3>
+                            <p class="text-xs text-amber-800">These were set from the map. You can adjust them if needed.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <!-- Latitude -->
+                        <div>
+                            <label for="shopLat" class="block text-xs font-semibold text-gray-700 mb-1">
+                                Latitude
+                            </label>
+                            <input
+                                type="text"
+                                id="shopLat"
+                                name="shopLat"
+                                required
+                                step="any"
+                                class="w-full px-3 py-2 border border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm bg-white"
+                                placeholder="e.g., 40.7128">
+                        </div>
+
+                        <!-- Longitude -->
+                        <div>
+                            <label for="shopLon" class="block text-xs font-semibold text-gray-700 mb-1">
+                                Longitude
+                            </label>
+                            <input
+                                type="text"
+                                id="shopLon"
+                                name="shopLon"
+                                required
+                                step="any"
+                                class="w-full px-3 py-2 border border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm bg-white"
+                                placeholder="e.g., -74.0060">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button
+                    type="submit"
+                    class="w-full bg-amber-700 hover:bg-amber-800 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg hover:shadow-xl">
+                    Add Coffee Shop
+                </button>
+
+                <!-- Back to Map Button -->
+                <a
+                    href="/map"
+                    class="block w-full text-center px-4 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-semibold">
+                    ← Back to Map
+                </a>
+            </form>
+
+            <!-- Help Text -->
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <p class="text-xs text-gray-500 text-center">
+                    💡 Tip: Click anywhere on the map to set the location before coming here.
+                </p>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // Get latitude and longitude from URL parameters
         const shopLon = document.getElementById("shopLon");
         const shopLat = document.getElementById("shopLat");
         const urlParams = new URLSearchParams(window.location.search);
-        shopLat.value = urlParams.get("lat");
-        shopLon.value = urlParams.get("lon");
+
+        const lat = urlParams.get("lat");
+        const lon = urlParams.get("lon");
+
+        if (lat) {
+            shopLat.value = parseFloat(lat).toFixed(6);
+        }
+        if (lon) {
+            shopLon.value = parseFloat(lon).toFixed(6);
+        }
+
+        // Focus on shop name input on load
+        document.getElementById("shopName").focus();
     </script>
 </body>
 </html>

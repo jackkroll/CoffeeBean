@@ -2,13 +2,82 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>401 - Unauthorized</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>401 - Unauthorized | CoffeeBean</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #78350f 0%, #d97706 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        body::before {
+            content: '☕ ☕ ☕ ☕ ☕ ☕ ☕ ☕ ☕ ☕ ☕ ☕ ☕ ☕ ☕ ☕ ☕ ☕ ☕ ☕';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            font-size: 60px;
+            opacity: 0.05;
+            line-height: 100px;
+            word-wrap: break-word;
+            z-index: 0;
+            pointer-events: none;
+        }
+    </style>
 </head>
-<body>
-<h1> 401 - Unauthorized </h1>
-<h4>New to CoffeeBean?</h4>
-<p><a href="{{ signupURL }}">Create an account!</a></p>
-<h4>Have an account?</h4>
-<p><a href="{{ loginURL }}"> Login to access this page</a></p>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="relative z-10 w-full max-w-md">
+        <!-- Card -->
+        <div class="bg-white rounded-2xl shadow-2xl p-8 text-center">
+            <!-- Lock Icon -->
+            <div class="mb-6">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-amber-100 rounded-full">
+                    <svg class="w-10 h-10 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Error Code -->
+            <div class="mb-4">
+                <h1 class="text-6xl font-bold text-amber-900">401</h1>
+                <h2 class="text-2xl font-semibold text-gray-800 mt-2">Unauthorized</h2>
+            </div>
+
+            <!-- Message -->
+            <p class="text-gray-600 mb-8">
+                You need to be logged in to access this page. Grab a cup of coffee and sign in!
+            </p>
+
+            <!-- Action Buttons -->
+            <div class="space-y-4">
+                <!-- New User Section -->
+                <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <h4 class="text-sm font-semibold text-amber-900 mb-2">New to CoffeeBean?</h4>
+                    <a href="{{ signupURL }}"
+                       class="inline-block w-full px-6 py-3 bg-amber-700 hover:bg-amber-800 text-white font-bold rounded-lg transition-colors shadow-lg hover:shadow-xl">
+                        Create an Account
+                    </a>
+                </div>
+
+                <!-- Existing User Section -->
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <h4 class="text-sm font-semibold text-gray-800 mb-2">Have an Account?</h4>
+                    <a href="{{ loginURL }}"
+                       class="inline-block w-full px-6 py-3 bg-white border-2 border-amber-700 text-amber-700 hover:bg-amber-50 font-bold rounded-lg transition-colors">
+                        Login to Continue
+                    </a>
+                </div>
+
+                <!-- Back to Home -->
+                <a href="/"
+                   class="block text-gray-600 hover:text-amber-700 font-semibold transition-colors">
+                    ← Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

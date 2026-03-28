@@ -2,23 +2,137 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Account - CoffeeBean</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-image: url('https://images.unsplash.com/photo-1553698249-0e3f9263ffa4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb2ZmZWUlMjBiZWFucyUyMGJhY2tncm91bmR8ZW58MXx8fHwxNzc0NzI3MTEwfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            position: relative;
+        }
 
+        /* Dark overlay for better readability */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 0;
+        }
+    </style>
 </head>
-<body>
-<form method="POST">
-  <label for="password">Confirm Password</label>
-  <input type="password" id="password" name="password">
-  <br>
+<body class="flex items-center justify-center p-4">
+    <div class="w-full max-w-md" style="position: relative; z-index: 1;">
+        <!-- Logo/Brand -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-white mb-2">CoffeeBean</h1>
+            <p class="text-amber-100">Rate your favorite coffee drinks</p>
+        </div>
 
-  <input type="radio" id = anon name="contentCleanup" value="anonymize" checked>
-  <label for="anon">Anonymize all my posted reviews</label>
-  <br>
+        <!-- Delete Account Card -->
+        <div class="bg-white rounded-2xl shadow-2xl p-8">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Delete Account</h2>
+                <p class="text-gray-600">This action cannot be undone. Please confirm your password.</p>
+            </div>
 
-  <input type="radio" id = delete name="contentCleanup" value="delete">
-  <label for="anon">Delete all my posted reviews</label>
-  <br>
-  <input type="submit" value="Delete Account">
-</form>
+            <!-- Error Message -->
+            {% if error %}
+            <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-red-600 text-sm font-medium">{{ error }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Warning Message -->
+            <div class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <p class="text-amber-800 text-sm font-medium">⚠️ Warning: This will permanently delete your account</p>
+            </div>
+
+            <form method="POST" class="space-y-5">
+                <!-- Password Field -->
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                        Confirm Password
+                    </label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition duration-200 outline-none"
+                        placeholder="Enter your password to confirm"
+                    >
+                </div>
+
+                <!-- Review Options -->
+                <div class="space-y-3">
+                    <label class="block text-sm font-medium text-gray-700 mb-3">
+                        What should happen to your reviews?
+                    </label>
+
+                    <!-- Anonymize Option -->
+                    <div class="flex items-start">
+                        <input
+                            type="radio"
+                            id="anon"
+                            name="contentCleanup"
+                            value="anonymize"
+                            checked
+                            class="mt-1 h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300"
+                        >
+                        <label for="anon" class="ml-3 block text-sm text-gray-700">
+                            <span class="font-medium">Anonymize all my posted reviews</span>
+                            <p class="text-gray-500 text-xs mt-1">Reviews will remain visible but without your username</p>
+                        </label>
+                    </div>
+
+                    <!-- Delete Option -->
+                    <div class="flex items-start">
+                        <input
+                            type="radio"
+                            id="delete"
+                            name="contentCleanup"
+                            value="delete"
+                            class="mt-1 h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300"
+                        >
+                        <label for="delete" class="ml-3 block text-sm text-gray-700">
+                            <span class="font-medium">Delete all my posted reviews</span>
+                            <p class="text-gray-500 text-xs mt-1">All your reviews will be permanently removed</p>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button
+                    type="submit"
+                    class="w-full text-white font-semibold py-3 px-6 rounded-lg transform hover:scale-[1.02] transition duration-200 shadow-lg"
+                    style="background: linear-gradient(to right, #dc2626, #991b1b);"
+                    onmouseover="this.style.background='linear-gradient(to right, #b91c1c, #7f1d1d)'"
+                    onmouseout="this.style.background='linear-gradient(to right, #dc2626, #991b1b)'"
+                >
+                    Delete Account
+                </button>
+
+                <!-- Cancel Link -->
+                <div class="text-center mt-4">
+                    <a href="/account" class="text-gray-600 hover:text-gray-800 text-sm hover:underline">
+                        Cancel and go back
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-6 text-amber-100 text-sm">
+            <p>&copy; 2026 CoffeeBean. Find and rate the best coffee near you.</p>
+        </div>
+    </div>
 </body>
 </html>

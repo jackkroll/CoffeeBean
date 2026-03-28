@@ -1,17 +1,113 @@
+<!DOCTYPE html>
 <html lang="en">
-    <head>
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-              integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-              crossorigin=""/>
-        <style>
-            #map { height: 90vh; }
-        </style>
-        <title>Map - CoffeeBean</title>
-    </head>
-    <body>
-    <div id="map">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map - CoffeeBean</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+    <style>
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        .shop-card:hover {
+            transform: translateX(4px);
+        }
 
+        /* Custom scrollbar for sidebar */
+        .shop-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        .shop-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .shop-list::-webkit-scrollbar-thumb {
+            background: #d97706;
+            border-radius: 4px;
+        }
+        .shop-list::-webkit-scrollbar-thumb:hover {
+            background: #b45309;
+        }
+    </style>
+</head>
+<body class="overflow-hidden">
+    <div class="relative h-screen flex">
+        <!-- Sidebar -->
+        <div id="sidebar"
+             class="z-[999] h-full w-80 bg-white shadow-2xl overflow-hidden flex flex-col flex-shrink-0">
+
+            <!-- Header with Logo and Search -->
+            <div class="p-4 bg-amber-900 text-white">
+                <h2 class="text-2xl font-bold mb-1">CoffeeBean</h2>
+                <p class="text-amber-100 text-sm mb-4">Find coffee shops near you</p>
+
+                <!-- Zipcode Search -->
+                <form action="/map" method="GET" class="space-y-2">
+                    <div class="relative">
+                        <input type="text"
+                               name="zipcode"
+                               id="zipcodeInput"
+                               placeholder="Enter zipcode..."
+                               class="w-full px-4 py-2 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                               pattern="[0-9]{5}"
+                               maxlength="5">
+                    </div>
+                    <button type="submit"
+                            class="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                        Search Area
+                    </button>
+                </form>
+
+                <div class="mt-3 text-sm text-amber-100">
+                    <span id="shopCount">Loading shops...</span>
+                </div>
+            </div>
+
+            <!-- Shop List -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-3 shop-list" id="shopList">
+                <!-- Shop cards will be dynamically inserted here by JavaScript -->
+            </div>
+
+            <!-- Footer -->
+            <div class="p-4 border-t border-gray-200 bg-gray-50 space-y-3">
+                <!-- Add New Shop CTA -->
+                <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-center">
+                    <p class="text-sm text-gray-700 mb-2">Don't see a coffee shop?</p>
+                    <button id="addShopBtn"
+                       class="inline-block w-full px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors font-semibold">
+                        Add one here
+                    </button>
+                </div>
+
+                <a href="/"
+                   class="block w-full text-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
+                    ← Back to Home
+                </a>
+            </div>
+        </div>
+
+        <!-- Map Container -->
+        <div class="flex-1 relative">
+
+            <div id="map"></div>
+
+            <!-- Top Right User Menu -->
+            <div class="absolute top-4 right-4 z-[1000] flex gap-3">
+                <a href="/profile"
+                   class="bg-white px-4 py-2 rounded-lg shadow-lg hover:bg-gray-50 transition-all text-amber-900 font-semibold">
+                    My Profile
+                </a>
+                <a href="/logout"
+                   class="bg-amber-700 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-amber-800 transition-all font-semibold">
+                    Logout
+                </a>
+            </div>
+        </div>
     </div>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
             crossorigin=""></script>
@@ -19,11 +115,13 @@
         let map;
         let lastlat;
         let lastlon;
-        var markers = [];
+        let markers = [];
+        let shopData = []; // Store shop data for sidebar
 
+        // Distance calculation function
         function distCoords(lat1, lon1, lat2, lon2) {
             const R = 6371e3; // metres
-            const c1 = lat1 * Math.PI/180; // φ, λ in radians
+            const c1 = lat1 * Math.PI/180;
             const c2 = lat2 * Math.PI/180;
             const dc = (lat2-lat1) * Math.PI/180;
             const dl = (lon2-lon1) * Math.PI/180;
@@ -33,60 +131,121 @@
                 Math.sin(dl/2) * Math.sin(dl/2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 
-            const d = R * c; //in metres
+            const d = R * c;
             return d/1609; // in miles
         }
 
+        // Click on map to add new shop
         function onMapClick(e) {
             var popup = L.popup();
             popup
                 .setLatLng(e.latlng)
-                .setContent("<a href='{{url_for('add_shop')}}?lat="+e.latlng.lat+"&lon="+e.latlng.lng+"'>Add new shop here</a>")
+                .setContent("<div class='text-center'><p class='font-semibold text-amber-900 mb-2'>Add shop here?</p><a href='{{url_for('add_shop')}}?lat="+e.latlng.lat+"&lon="+e.latlng.lng+"' class='text-amber-600 hover:text-amber-800 font-semibold'>Yes, add shop →</a></div>")
                 .openOn(map);
         }
 
-        function markerPlace(res, curlat, curlon) {
-                console.log(res);
-                let dist
-                let lat = res[1].lat
-                let lon = res[1].lon
+        // Custom coffee shop icon
+        const coffeeIcon = L.divIcon({
+            className: 'custom-icon',
+            html: '<div style="background-color: #78350f; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">☕</div>',
+            iconSize: [36, 36],
+            iconAnchor: [18, 18]
+        });
 
-                if (curlat != null && curlon != null) {
-                    dist = distCoords(curlat, curlon, lat, lon)
-                } else {
-                    dist = res[0];
+        // Place marker on map and update sidebar
+        function markerPlace(res, curlat, curlon) {
+            console.log(res);
+            let dist;
+            let lat = res[1].lat;
+            let lon = res[1].lon;
+
+            if (curlat != null && curlon != null) {
+                dist = distCoords(curlat, curlon, lat, lon);
+            } else {
+                dist = res[0];
+            }
+            let name = res[1].name;
+            let id = res[1].id;
+
+            var found = false;
+            markers.forEach(oldmarker => {
+                let mlat = oldmarker.getLatLng().lat;
+                let mlon = oldmarker.getLatLng().lng;
+                if (mlat == lat && mlon == lon) {
+                    found = true;
                 }
-                let name = res[1].name;
-                let id = res[1].id
-                var found = false;
-                //i would not do this if it weren't for the fact i tried every other way i could think of and it gave me issues
-                markers.forEach(oldmarker => {
-                    let mlat = oldmarker.getLatLng().lat
-                    let mlon = oldmarker.getLatLng().lng
-                    if (mlat == lat && mlon == lon) {
-                        found = true;
-                    }
-                    //TODO: may also be worth deleting any that are outside bounds
-                })
-                if (!found) {
-                    var marker = L.marker([lat, lon]).addTo(map);
-                    marker.bindPopup("<b>" + name + "</b><br>Distance: " + dist.toFixed(1) + " miles<br><a href='{{ url_for('shops') }}?shopID=" + id + "'>View shop</a>");
-                    markers.push(marker)
-                }
+            });
+
+            if (!found) {
+                var marker = L.marker([lat, lon], { icon: coffeeIcon }).addTo(map);
+                marker.bindPopup(`
+                    <div class='text-center'>
+                        <h3 class='font-bold text-amber-900 mb-1'>${name}</h3>
+                        <p class='text-sm text-gray-600 mb-2'>Distance: ${dist.toFixed(1)} miles</p>
+                        <a href='{{ url_for("shops") }}?shopID=${id}' class='text-amber-600 hover:text-amber-800 font-semibold text-sm'>View shop →</a>
+                    </div>
+                `);
+                markers.push(marker);
+
+                // Add to shop data for sidebar
+                shopData.push({
+                    id: id,
+                    name: name,
+                    lat: lat,
+                    lon: lon,
+                    dist: dist
+                });
+
+                updateSidebar();
+            }
         }
 
+        // Update sidebar with shop list
+        function updateSidebar() {
+            const shopList = document.getElementById('shopList');
+            const shopCount = document.getElementById('shopCount');
+
+            shopCount.textContent = `${shopData.length} shop${shopData.length !== 1 ? 's' : ''} found`;
+
+            // Sort by distance
+            shopData.sort((a, b) => a.dist - b.dist);
+
+            shopList.innerHTML = shopData.map(shop => `
+                <div class="shop-card bg-white border border-gray-200 rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer"
+                     onclick="focusShop(${shop.lat}, ${shop.lon})">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <h3 class="font-bold text-amber-900 text-lg">${shop.name}</h3>
+                            <p class="text-sm text-gray-600 flex items-center mt-1">
+                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                                </svg>
+                                ${shop.dist.toFixed(1)} miles away
+                            </p>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{{ url_for('shops') }}?shopID=${shop.id}"
+                           class="text-amber-600 hover:text-amber-800 font-semibold text-sm"
+                           onclick="event.stopPropagation()">
+                            View Details →
+                        </a>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update map when moved/zoomed
         function updateMap(e) {
-            centerLat = map.getBounds().getCenter().lat
-            centerLon = map.getBounds().getCenter().lng
-            boundLat = map.getBounds().getNorthEast().lat
-            boundLon = map.getBounds().getNorthEast().lng
-            distance = distCoords(centerLat, centerLon, boundLat, boundLon)
+            centerLat = map.getBounds().getCenter().lat;
+            centerLon = map.getBounds().getCenter().lng;
+            boundLat = map.getBounds().getNorthEast().lat;
+            boundLon = map.getBounds().getNorthEast().lng;
+            distance = distCoords(centerLat, centerLon, boundLat, boundLon);
 
-            urlString = "{{ url_for('location_fetch') }}" + "?lat=" + centerLat + "&lon=" + centerLon + "&maxDist=" + Math.trunc(distance)
+            urlString = "{{ url_for('location_fetch') }}" + "?lat=" + centerLat + "&lon=" + centerLon + "&maxDist=" + Math.trunc(distance);
             fetchLocations(urlString).then(function (res) {
-
                 if ("geolocation" in navigator) {
-
                     navigator.geolocation.getCurrentPosition(function(pos) {
                         let curlat = pos.coords.latitude;
                         let curlon = pos.coords.longitude;
@@ -97,11 +256,12 @@
                         for (let i = 0; i < res.length; i++) {
                             markerPlace(res[i], null, null);
                         }
-                    })
+                    });
                 }
-            })
+            });
         }
 
+        // Fetch locations from backend
         async function fetchLocations(url) {
             const resp = await fetch(url);
             if (resp.ok) {
@@ -111,31 +271,70 @@
             }
         }
 
+        // Focus on a specific shop
+        function focusShop(lat, lng) {
+            map.setView([lat, lng], 17, { animate: true });
+            // Find and open the marker popup
+            markers.forEach(marker => {
+                const position = marker.getLatLng();
+                if (position.lat === lat && position.lng === lng) {
+                    marker.openPopup();
+                }
+            });
+        }
+
+        // Add shop button - use current map center
+        document.getElementById('addShopBtn').addEventListener('click', () => {
+            const center = map.getCenter();
+            window.location.href = "{{url_for('add_shop')}}?lat=" + center.lat + "&lon=" + center.lng;
+        });
+
+        // Initialize map on page load
         window.onload = function() {
             lastlat = 47.12170928392314;
             lastlon = -88.56322646141052;
-            map = L.map('map').setView([47.12170928392314, -88.56322646141052], 15);
+
+            map = L.map('map', {
+                zoomControl: false
+            }).setView([lastlat, lastlon], 15);
+
+            // Add zoom control to bottom right
+            L.control.zoom({
+                position: 'bottomright'
+            }).addTo(map);
+
             map.on('click', onMapClick);
+
             L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             }).addTo(map);
 
             if ("geolocation" in navigator) {
-
                 map.locate({
-                    setView:true,
+                    setView: true,
                     maxZoom: 15
-                })
+                });
 
+                // Add user location marker
+                map.on('locationfound', function(e) {
+                    const userIcon = L.divIcon({
+                        className: 'custom-icon',
+                        html: '<div style="background-color: #3b82f6; color: white; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); animation: pulse 2s infinite;"></div>',
+                        iconSize: [20, 20],
+                        iconAnchor: [10, 10]
+                    });
+                    L.marker([e.latlng.lat, e.latlng.lng], { icon: userIcon })
+                        .addTo(map)
+                        .bindPopup("You are here")
+                        .openPopup();
+                });
             }
 
             updateMap();
             map.on('zoomend', updateMap);
             map.on('moveend', updateMap);
-
-
         }
     </script>
-    </body>
+</body>
 </html>
