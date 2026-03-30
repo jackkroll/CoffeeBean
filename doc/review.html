@@ -13,6 +13,13 @@
             {% endwith %}
         {% endfor %}
     {% endmacro %}
+    <style>
+        body {
+            background: linear-gradient(135deg, #78350f 0%, #d97706 100%);
+            position: relative;
+            overflow: hidden;
+        }
+    </style>
 </head>
 <body class="bg-gray-200 p-2 flex flex-col items-stretch justify-center min-h-screen w-full max-w-3xl mx-auto">
     <div class="flex flex-col gap-x-3 w-full min-h-sm items-stretch justify-center sm:flex-row">
@@ -44,14 +51,21 @@
         {% for review in shopReviews | selectattr('comment')%}
     <div class="flex flex-row max-h-xs bg-gray-200 rounded-2xl p-5 space-y-2 max-w-fill gap-2">
         <div class=" hidden sm:block max-h-fill max-w-20">
-            {% set fill = "#dd72e0" %}
+            {% set fill = ((review.parentID | getUserFromReviewFieldID).id | getUserColorFromID) %}
             {% with fill=fill %}
                 {% include 'person.svg'%}
             {% endwith %}
         </div>
         <div class="flex flex-col max-h-xs max-w-full">
             <div class="flex-row">
-            <h6 class="text-sm font-bold">Username</h6>
+            <h6 class="text-sm font-bold">
+                {% set commenter_username = review.parentID | usernameFromReviewFieldID %}
+                {% if commenter_username is not none %}
+                    {{ commenter_username }}
+                {% else %}
+                Deleted Account
+                {% endif %}
+            </h6>
             <div class="flex flex-grow flex-row items-center w-fit gap-2 h-5">
             {{ render_rating(review.value, 'review-' ~ review.parentID) }}
             </div>
