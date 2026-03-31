@@ -1,5 +1,7 @@
 from extensions import db
+from jinja2 import Environment, FunctionLoader
 import bcrypt
+import colour
 import json
 from models import *
 from geopy.distance import geodesic
@@ -105,3 +107,35 @@ def usernameIsTaken(db: db.session, username: str) -> bool:
 def passwordIsValid(password: str) -> bool:
     matches = re.findall(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z]).{6,}$", password)
     return len(matches) > 0
+
+def getUserFromReviewFieldID(fieldID: str) -> User | None:
+    review = db.session.get(Review, fieldID)
+    if review is None or review.posterID is None:
+        return None
+    return db.session.get(User, review.posterID)
+
+def getUsernameFromReviewFieldID(fieldID: str) -> str | None:
+    user = getUserFromReviewFieldID(fieldID)
+    if user is None:
+        return None
+    return user.username
+
+def register_template_filters(app):
+    app.add_template_filter(getUserFromReviewFieldID, "getUserFromReviewFieldID")
+    app.add_template_filter(getUsernameFromReviewFieldID, "usernameFromReviewFieldID")
+    app.add_template_filter(getUserColorFromID, "getUserColorFromID")
+
+def getUserColorFromID(userID: str) -> str | None:
+    if len(userID) < 6:
+        return None
+    else:
+        initalHex = "#" + userID[:6]
+        hsl = colour.hex2hsl(initalHex)
+        hue = hsl[0]
+        sat = hsl[1]
+        light = hsl[2]
+        if sat < 0.4:
+            sat = 0.4
+        if light < 0.4:
+            light = 0.4
+        return colour.hsl2hex((hue, sat, light))

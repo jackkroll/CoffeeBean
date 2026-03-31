@@ -8,3 +8,4 @@ Flask-Login~=0.6.3
 bcrypt~=5.0.0
 python-dotenv~=1.2.2
 pyre2~=0.3.10
+colour~=0.1.5

@@ -259,6 +259,40 @@ def test_deleteReviewFor_deletes_reviews_and_review_fields_for_matching_poster(d
     assert db_session.get(ReviewField, (kept_review.id, "body")) is not None
 
 
+def test_getUserFromReviewFieldID_returns_user_for_review_parent(db_session):
+    user = create_user(db_session, username="commenter")
+    shop = Shop("Cafe", 42.0, -83.0, user.id)
+    item = Item("Latte", shop.id, 5.0, user.id)
+    review = Review(100.0, user.id, shop.id, item.id)
+    db_session.add_all([shop, item, review])
+    db_session.commit()
+
+    fetched_user = getUserFromReviewFieldID(review.id)
+
+    assert fetched_user is not None
+    assert fetched_user.id == user.id
+
+
+def test_getUsernameFromReviewFieldID_returns_username_and_handles_deleted_user(db_session):
+    user = create_user(db_session, username="visible-name")
+    shop = Shop("Cafe", 42.0, -83.0, user.id)
+    item = Item("Latte", shop.id, 5.0, user.id)
+    visible_review = Review(100.0, user.id, shop.id, item.id)
+    deleted_review = Review(101.0, None, shop.id, item.id)
+    db_session.add_all([shop, item, visible_review, deleted_review])
+    db_session.commit()
+
+    assert getUsernameFromReviewFieldID(visible_review.id) == "visible-name"
+    assert getUsernameFromReviewFieldID(deleted_review.id) is None
+
+
+def test_register_template_filters_adds_review_username_filter(app):
+    register_template_filters(app)
+
+    assert "usernameFromReviewFieldID" in app.jinja_env.filters
+    assert "getUserFromReviewFieldID" in app.jinja_env.filters
+
+
 def test_usernameIsTaken_detects_presence(db_session):
     create_user(db_session, username="taken-name")
 

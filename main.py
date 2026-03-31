@@ -19,6 +19,7 @@ app.secret_key = os.getenv("FLASK_SECRET")
 login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 db.init_app(app)
+register_template_filters(app)
 CORS(app); #fix later as this is bad practice
 
 with app.app_context():
@@ -34,7 +35,7 @@ def request_loader(request):
     if id is None:
         return None
     return db.session.get(User, id)
-@app.route("/")
+@app.route("/about")
 def landing_page():
     return render_template("landing.html")
 
@@ -60,7 +61,7 @@ def shops():
             print(avgList)
             return render_template("viewshop.html", shop = shop, shopItems = shopItems, avgList = avgList)
 
-@app.route("/map")
+@app.route("/")
 def map():
     return render_template("map.html")
 
@@ -117,7 +118,7 @@ def delete_shop():
 @login_required
 def add_shop():
     if request.method == "GET":
-        return send_from_directory("doc", "addshop.html")
+        return render_template("addshop.html")
     else:
         shopName = request.form.get("shopName")
         shopLatRaw = request.form.get("shopLat")
@@ -200,7 +201,7 @@ def create_account():
         returnTo = request.args.get("returnTo")
         if current_user.is_authenticated:
             if returnTo is None:
-                return redirect(url_for("landing_page"))
+                return redirect(url_for("map"))
             else:
                 return redirect(returnTo)
         return render_template("create-account.html", returnTo = returnTo)
@@ -221,7 +222,7 @@ def create_account():
         except IntegrityError as e:
             return Response("Username already taken", status=400, mimetype='application/json')
         if returnTo is None:
-            return redirect(url_for("landing_page"))
+            return redirect(url_for("map"))
         else:
             return redirect(returnTo)
 
@@ -231,7 +232,7 @@ def login():
         returnTo = request.args.get("returnTo")
         if current_user.is_authenticated:
             if returnTo is None:
-                return redirect(url_for("landing_page"))
+                return redirect(url_for("map"))
             else:
                 return redirect(returnTo)
         return render_template("login.html", returnTo = returnTo)
@@ -247,7 +248,7 @@ def login():
         else:
             login_user(user)
             if returnTo is None:
-                return redirect(url_for("landing_page"))
+                return redirect(url_for("map"))
             else:
                 return redirect(returnTo)
 @app.route('/change-password', methods = ["GET", "POST"])
@@ -269,7 +270,7 @@ def change_password():
         else:
             current_user.changePassword(newPassword)
             db.session.commit()
-            return redirect(url_for("landing_page"))
+            return redirect(url_for("map"))
 
 @app.route('/delete-account', methods = ["GET", "POST"])
 @login_required
@@ -291,7 +292,7 @@ def delete_account():
             anonymizeReviewFor(db.session, current_user.id)
         else:
             deleteReviewFor(db.session, current_user.id)
-        return redirect(url_for("landing_page"))
+        return redirect(url_for("map"))
 
 @app.route("/logout", methods = ["GET"])
 def logout():
