@@ -112,6 +112,7 @@
         let lastlon;
         let markers = [];
         let shopData = []; // Store shop data for sidebar
+        const maxDistance = 20;
 
         // Distance calculation function
         function distCoords(lat1, lon1, lat2, lon2) {
@@ -149,7 +150,6 @@
 
         // Place marker on map and update sidebar
         function markerPlace(res, curlat, curlon) {
-            console.log(res);
             let dist;
             let lat = res[1].lat;
             let lon = res[1].lon;
@@ -232,26 +232,31 @@
 
         // Update map when moved/zoomed
         function updateMap(e) {
-            centerLat = map.getBounds().getCenter().lat;
-            centerLon = map.getBounds().getCenter().lng;
-            boundLat = map.getBounds().getNorthEast().lat;
-            boundLon = map.getBounds().getNorthEast().lng;
-            distance = distCoords(centerLat, centerLon, boundLat, boundLon);
+            const centerLat = map.getBounds().getCenter().lat;
+            const centerLon = map.getBounds().getCenter().lng;
+            const boundLat = map.getBounds().getNorthEast().lat;
+            const boundLon = map.getBounds().getNorthEast().lng;
+            const distance = distCoords(centerLat, centerLon, boundLat, boundLon);
 
-            urlString = "{{ url_for('location_fetch') }}" + "?lat=" + centerLat + "&lon=" + centerLon + "&maxDist=" + Math.trunc(distance);
+            if (distance > maxDistance) {
+                return;
+            }
+            const urlString = "{{ url_for('location_fetch') }}" + "?lat=" + centerLat + "&lon=" + centerLon + "&maxDist=" + distance
             fetchLocations(urlString).then(function (res) {
-                if ("geolocation" in navigator) {
-                    navigator.geolocation.getCurrentPosition(function(pos) {
-                        let curlat = pos.coords.latitude;
-                        let curlon = pos.coords.longitude;
-                        for (let i = 0; i < res.length; i++) {
-                            markerPlace(res[i], curlat, curlon);
-                        }
-                    }, function () {
-                        for (let i = 0; i < res.length; i++) {
-                            markerPlace(res[i], null, null);
-                        }
-                    });
+                if (res !== -1) {
+                    if ("geolocation" in navigator) {
+                        navigator.geolocation.getCurrentPosition(function (pos) {
+                            let curlat = pos.coords.latitude;
+                            let curlon = pos.coords.longitude;
+                            for (let i = 0; i < res.length; i++) {
+                                markerPlace(res[i], curlat, curlon);
+                            }
+                        }, function () {
+                            for (let i = 0; i < res.length; i++) {
+                                markerPlace(res[i], null, null);
+                            }
+                        });
+                    }
                 }
             });
         }
