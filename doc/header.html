@@ -1,17 +1,25 @@
 <header class="w-full bg-amber-900 shadow-md">
   <nav class="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
-    
+
+    {% if displayLogo is not none and displayLogo is false%}
+    <div class="m-auto"></div>
+    {% else %}
     <!-- Logo / Title -->
     <div class="text-white text-2xl font-bold">
       CoffeeBean
     </div>
-
+    {% endif %}
     <!-- Navigation Links -->
     <div class="flex space-x-8">
       <a href="/about" class="text-white hover:text-amber-200 font-medium">Home</a>
       <a href="/" class="text-white hover:text-amber-200 font-medium">Map</a>
+      {% if user.is_authenticated %}
+      <a href="/logout" class="text-white hover:text-amber-200 font-medium">Logout</a>
+      {% else %}
       <a href="/login" class="text-white hover:text-amber-200 font-medium">Login</a>
       <a href="/create-account" class="text-white hover:text-amber-200 font-medium">Sign Up</a>
+      {% endif %}
+
     </div>
 
   </nav>

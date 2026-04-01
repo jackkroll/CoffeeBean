@@ -35,6 +35,10 @@ def request_loader(request):
     if id is None:
         return None
     return db.session.get(User, id)
+
+@app.context_processor
+def inject_current_user():
+    return dict(user=current_user)
 @app.route("/about")
 def landing_page():
     return render_template("landing.html")
@@ -197,30 +201,33 @@ def password_valid():
 
 @app.route("/create-account", methods =["GET", "POST"])
 def create_account():
+    error = request.args.get("error")
+    returnTo = request.args.get("returnTo")
     if request.method == "GET":
-        returnTo = request.args.get("returnTo")
         if current_user.is_authenticated:
             if returnTo is None:
                 return redirect(url_for("map"))
             else:
                 return redirect(returnTo)
-        return render_template("create-account.html", returnTo = returnTo)
+        return render_template("create-account.html", returnTo = returnTo, error=error)
     else:
         username = request.form.get("username")
         email = request.form.get("email")
         password = request.form.get("password")
         returnTo = request.form.get("returnTo")
         if username is None or email is None or password is None:
-            return Response("Fields invalid", status=400, mimetype='application/json')
+            return redirect(url_for("create_account", error="A Username, an email, and a password are required", returnTo=returnTo), code=303)
         if not passwordIsValid(password):
-            return Response("Password must contain at least 6 characters, 1 uppercase, 1 lowercase, and one symbol/number", status=400, mimetype='application/json')
+            return redirect(url_for("create_account", error="Password must contain at least 6 characters, 1 uppercase, 1 lowercase, and one symbol/number", returnTo=returnTo), code=303)
         user = User.fromStrings(username, email, password)
         try:
             db.session.add(user)
             db.session.commit()
             login_user(user)
         except IntegrityError as e:
-            return Response("Username already taken", status=400, mimetype='application/json')
+            return redirect(url_for("create_account",
+                                    error="Username already taken"),
+                            code=303)
         if returnTo is None:
             return redirect(url_for("map"))
         else:
@@ -228,23 +235,23 @@ def create_account():
 
 @app.route("/login", methods = ["GET", "POST"])
 def login():
+    error = request.args.get("error")
+    returnTo = request.form.get("returnTo")
     if request.method == "GET":
-        returnTo = request.args.get("returnTo")
         if current_user.is_authenticated:
             if returnTo is None:
                 return redirect(url_for("map"))
             else:
                 return redirect(returnTo)
-        return render_template("login.html", returnTo = returnTo)
+        return render_template("login.html", returnTo = returnTo, error = error)
     else:
         username = request.form.get("username")
         password = request.form.get("password")
-        returnTo = request.form.get("returnTo")
         if username is None or password is None:
-            return Response("Fields invalid", status=400, mimetype='application/json')
+            return redirect(url_for("login", error ="Username and Password are required", returnTo=returnTo), code=303)
         user = loginUser(db.session, username, password)
         if user is None:
-            return Response("Username or Password incorrect", status=400, mimetype='application/json')
+            return redirect(url_for("login", error="Username or password incorrect", returnTo=returnTo), code=303)
         else:
             login_user(user)
             if returnTo is None:
