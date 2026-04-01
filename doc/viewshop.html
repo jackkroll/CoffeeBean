@@ -8,32 +8,63 @@
             margin:1px;
         }
     </style>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h3>{{ shop.name }}</h3>
-    <h4>Items:</h4>
-    <ul>
+<body class="m-0 p-0 bg-amber-900">
+<div class="flex flex-col md:flex-row md:items-center md:justify-center bg-amber-900 text-white h-screen m-0 p-0">
+    <div class="flex flex-col items-center justify-center p-4 h-full md:w-[33vw]">
+        <h1 class="text-7xl font-bold mb-1">{{ shop.name }}</h1>
+    </div>
+    <div class="items-center flex flex-col p-4 h-full md:w-[66vw] md:overflow-auto">
+        <h4 class="text-4xl font-bold mb-1">Items:</h4>
+
         {% for item in shopItems %}
-        <li>{{item.name}} - ${{ "%0.2f" % item.price }}
-            <p>BeanRating: {{ avgList[item] }}</p>
-            <a href="{{ url_for('review', shopID = shop.id, itemID = item.id) }}">See reviews...</a>
-            <br><br>
-        </li>
+        <div class="rounded-md p-3 m-2 bg-white text-black size-[66%]">
+            <div class="space-y-1">
+                <p class="text-3xl font-bold">{{item.name}}</p>
+                <p class="font-bold text-xl">
+                    {% if item.price is not none %}
+                    ${{ "%0.2f" % item.price }}
+                    {% else %}
+                    ${{ item.price }}
+                    {% endif %}
+                </p>
+                <p class="text-xl">
+                    {% if avgList[item] is not none %}
+                    BeanRating: {{ "%0.2f" % avgList[item] }}
+                    {% else %}
+                    BeanRating: {{ avgList[item] }}
+                    {% endif %}
+                </p>
+                <br>
+                <a href="{{ url_for('review', shopID = shop.id, itemID = item.id) }}" class="bg-amber-900 hover:bg-amber-600 text-white rounded-md p-2 text-xl">See reviews...</a>
+            </div>
+        </div>
         {% endfor %}
-    </ul>
-    <h4>Don't see an item? Help others by adding it!</h4>
-    <form action="/shop/add-item" method="POST">
-        <input type="hidden" id="shopID-item" name="shopID" value="{{ shop.id }}">
-        <label for="itemName">Item Name: </label>
-        <input type="text" id="itemName" name="itemName">
-        <label for="itemPrice">Item Price: </label>
-        <input type="text" id="itemPrice" name="itemPrice">
-        <input type="submit" value="Add Item to Shop">
-    </form>
-    <br><br>
-    <form action="/shop/delete" method="POST">
-        <input type="hidden" id="shopID" name="shopID" value="{{ shop.id }}">
-        <input type="submit" value="Delete Shop">
-    </form>
+        <br><br>
+        <h4 class="text-xl font-bold mb-1">Don't see an item? Help others by adding it!</h4>
+        <form action="/shop/add-item" method="POST" class="flex bg-amber-600 rounded-md flex-col p-3 justify-center md:w-[66%]">
+            <input type="hidden" id="shopID-item" name="shopID" value="{{ shop.id }}">
+            <div class="p-1">
+                <label for="itemName" class="text-xl">Item Name: </label>
+                <br>
+                <input type="text" id="itemName" name="itemName" class="rounded-md p-1 text-black text-xl w-full">
+            </div>
+            <br>
+            <div class="p-1">
+                <label for="itemPrice" class="text-xl">Item Price: <br>$</label>
+
+                <input type="text" id="itemPrice" name="itemPrice" class="rounded-md p-1 text-black text-xl">
+            </div>
+            <br>
+            <input type="submit" value="Add Item to Shop" class="bg-amber-900 rounded-md p-2 text-xl hover:bg-white hover:text-black">
+        </form>
+        <br><br>
+        <form action="/shop/delete" method="POST" class="bg-amber-600 hover:bg-white hover:text-black p-2 rounded-md hover:bg-amber-900">
+            <input type="hidden" id="shopID" name="shopID" value="{{ shop.id }}">
+            <input type="submit" value="Delete Shop">
+        </form>
+    </div>
+</div>
 </body>
 </html>
