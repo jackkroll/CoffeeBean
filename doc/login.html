@@ -13,7 +13,11 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body class="min-h-screen ">
+
+    {% include "header.html" %}
+    
+    <div class="flex items-center justify-center p-4 min-h-[calc(100vh-64px)]">
     <div class="w-full max-w-md" style="position: relative; z-index: 1;">
         <!-- Login Card -->
         <div class="bg-white rounded-2xl shadow-2xl p-8">
@@ -76,12 +80,13 @@
             <div class="mt-6 text-center">
                 <p class="text-gray-600">
                     Don't have an account?
-                    <a href="/signup" class="text-amber-700 hover:text-amber-900 font-semibold hover:underline">
+                    <a href="/create-account" class="text-amber-700 hover:text-amber-900 font-semibold hover:underline">
                         Sign up
                     </a>
                 </p>
             </div>
         </div>
+    </div>
     </div>
 </body>
 </html>
