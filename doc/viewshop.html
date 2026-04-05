@@ -7,11 +7,16 @@
         li > * {
             margin:1px;
         }
+        body {
+            background: linear-gradient(135deg, #78350f 0%, #d97706 100%);
+            position: relative;
+            overflow: hidden;
+        }
     </style>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="m-0 p-0 bg-amber-900">
-<div class="flex flex-col md:flex-row md:items-center md:justify-center bg-amber-900 text-white h-screen m-0 p-0">
+<body class="m-0 p-0 ">
+<div class="flex flex-col md:flex-row md:items-center md:justify-center  text-white h-screen m-0 p-0">
     <div class="flex flex-col items-center md:items-end justify-center p-4 h-full md:w-[33vw]">
         <h1 class="text-6xl font-bold mb-1 text-center w-[75%]">{{ shop.name }}</h1>
     </div>
