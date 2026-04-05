@@ -137,7 +137,7 @@ def add_shop():
             try:
                 db.session.add(newShop)
                 db.session.commit()
-                return redirect(url_for("shops"))
+                return redirect(url_for("map"))
             except Exception as e:
                 return Response("Error saving to database", status=500, mimetype='application/json')
 
@@ -239,7 +239,7 @@ def create_account():
 @app.route("/login", methods = ["GET", "POST"])
 def login():
     error = request.args.get("error")
-    returnTo = request.form.get("returnTo")
+    returnTo = request.args.get("returnTo")
     if request.method == "GET":
         if current_user.is_authenticated:
             if returnTo is None:
@@ -250,6 +250,7 @@ def login():
     else:
         username = request.form.get("username")
         password = request.form.get("password")
+        returnTo = request.form.get("returnTo")
         if username is None or password is None:
             return redirect(url_for("login", error ="Username and Password are required", returnTo=returnTo), code=303)
         user = loginUser(db.session, username, password)
@@ -307,7 +308,7 @@ def delete_account():
 @app.route("/logout", methods = ["GET"])
 def logout():
     logout_user()
-    return "ok!"
+    return redirect(url_for("map"))
 @app.route("/protected")
 @login_required
 def protected():
