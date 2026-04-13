@@ -63,12 +63,16 @@ def shops():
             reviewType = "bitterness"
             for item in shopItems:
                 avgList[item] = getItemAverageRating(item, reviewType)
-            print(avgList)
             return render_template("viewshop.html", shop = shop, shopItems = shopItems, avgList = avgList)
 
 @app.route("/")
 def map():
-    return render_template("map.html")
+    search = request.args.get("shopname")
+    if not search or search == "":
+        return render_template("map.html")
+    else:
+        shops : [Shop] = fetchShopsByName(db.session(),search)
+        return render_template("map.html",shops = shops)
 
 @app.route("/review/<shopID>")
 def review(shopID):

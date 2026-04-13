@@ -35,7 +35,7 @@
 </head>
 <body class="overflow-hidden">
 
-    
+
 
     <div class="relative h-screen flex">
         <!-- Sidebar -->
@@ -48,19 +48,17 @@
                 <p class="text-amber-100 text-sm mb-4">Find coffee shops near you</p>
 
                 <!-- Zipcode Search -->
-                <form action="/map" method="GET" class="space-y-2">
+                <form action="{{url_for('map')}}" method="GET" class="space-y-2">
                     <div class="relative">
                         <input type="text"
-                               name="zipcode"
-                               id="zipcodeInput"
-                               placeholder="Enter zipcode..."
-                               class="w-full px-4 py-2 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-400"
-                               pattern="[0-9]{5}"
-                               maxlength="5">
+                               name="shopname"
+                               id="shopnameInput"
+                               placeholder="Enter shop name..."
+                               class="w-full px-4 py-2 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-400">
                     </div>
                     <button type="submit"
                             class="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
-                        Search Area
+                        Search...
                     </button>
                 </form>
 
@@ -283,8 +281,16 @@
             window.location.href = "{{url_for('add_shop')}}?lat=" + center.lat + "&lon=" + center.lng;
         });
 
+        /*
+        function storeLoc(lat, lng) {
+            lastlat = lat;
+            lastlng = lng;
+        }
+         */
+
         // Initialize map on page load
         window.onload = function() {
+            //initialize to houghton :)
             lastlat = 47.12170928392314;
             lastlon = -88.56322646141052;
 
@@ -310,6 +316,7 @@
                     maxZoom: 15
                 });
 
+
                 // Add user location marker
                 map.on('locationfound', function(e) {
                     const userIcon = L.divIcon({
@@ -318,16 +325,54 @@
                         iconSize: [20, 20],
                         iconAnchor: [10, 10]
                     });
+                    //storeLoc(e.latlng.lat,e.latlng.lat)
+
                     L.marker([e.latlng.lat, e.latlng.lng], { icon: userIcon })
                         .addTo(map)
                         .bindPopup("You are here")
                         .openPopup();
                 });
             }
+            let params = new URLSearchParams(document.location.search);
+            let name = params.get("shopname");
+            if (name != null && name != "") {
+                shopData = [];
+                var marker;
+                {% for shop in shops %}
+                shopData.push({
+                    id: "{{shop.id}}",
+                    name: "{{shop.name}}",
+                    lat: {{shop.lat}},
+                    lon: {{shop.lon}},
+                    dist: distCoords(map.getCenter().lat, map.getCenter().lng, {{shop.lat}},{{shop.lon}})
+                });
+                marker = L.marker([shopData[shopData.length - 1].lat, shopData[shopData.length - 1].lon], { icon: coffeeIcon }).addTo(map);
+                marker.bindPopup(`
+                    <div class='text-center'>
+                        <h3 class='font-bold text-amber-900 mb-1'>${shopData[shopData.length - 1].name}</h3>
+                        <p class='text-sm text-gray-600 mb-2'>Distance: ${shopData[shopData.length - 1].dist.toFixed(1)} miles</p>
+                        <a href='{{ url_for("shops") }}?shopID=${shopData[shopData.length - 1].id}' class='text-amber-600 hover:text-amber-800 font-semibold text-sm'>View shop →</a>
+                    </div>
+                `);
+                markers.push(marker);
+                {%endfor%}
+                updateSidebar();
+                const c1 = L.latLng(shopData[0].lat, shopData[0].lon);
+                const c2 = L.latLng(shopData[shopData.length - 1].lat, shopData[shopData.length - 1].lon);
+                const bounds = L.latLngBounds(c1, c2);
 
-            updateMap();
-            map.on('zoomend', updateMap);
-            map.on('moveend', updateMap);
+                //literally the only way to make this work is to use a timeout because leaflet moment
+                setTimeout(function() {
+                    if (shopData.length > 1) map.fitBounds(bounds);
+                    else map.setView(c1);
+                },100)
+            } else {
+                updateMap();
+                map.on('zoomend', updateMap);
+                map.on('moveend', updateMap);
+            }
+
+
         }
     </script>
 </body>
