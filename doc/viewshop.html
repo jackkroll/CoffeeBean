@@ -65,10 +65,18 @@
             <input type="submit" value="Add Item to Shop" class="bg-amber-900 rounded-md p-2 text-l hover:bg-amber-500 hover:text-black">
         </form>
         <br><br>
-        <form action="/shop/report" method="POST" class="bg-amber-600 hover:bg-amber-500 hover:text-black p-2 rounded-md">
-            <input type="hidden" id="shopID" name="shopID" value="{{ shop.id }}">
+        {% if status is none %}
+        <form action="/report" method="POST" class="bg-amber-600 hover:bg-amber-500 hover:text-black p-2 rounded-md">
+            <input type="hidden" value="{{ shop.id }}" name="contentID">
+            <input type="hidden" name="returnTo" value="{{ request.url }}">
+            <input type="hidden" value="shop" name="contentType">
             <input type="submit" value="Report Shop">
         </form>
+        {% else %}
+        <div class="bg-amber-600 p-2 rounded-md">
+            <p>{{status}}</p>
+        </div>
+        {% endif %}
     </div>
 </div>
 </body>
