@@ -72,7 +72,7 @@ def map():
         return render_template("map.html")
     else:
         shops : [Shop] = fetchShopsByName(db.session(),search)
-        return render_template("map.html",shops = shops)
+        return render_template("map.html",shops = shops, search = search)
 
 @app.route("/review/<shopID>")
 def review(shopID):
