@@ -64,6 +64,16 @@ def fetchShopsByDistance(db: db.session, lat: float, lon: float, maxDistance: fl
     distanceShops.sort(key=lambda x: x[0])
     return distanceShops
 
+def fetchShopsByName(db: db.session, searchString: str):
+    shops = db.query(Shop).all()
+    nameShops = []
+    for shop in shops:
+        print(shop.name)
+        if searchString.lower() in shop.name.lower():
+            nameShops.append(shop)
+            print("found!")
+    return nameShops
+
 def getReviewStatistics(shopReviews): # TODO: contrain args by type
     total = 0
     if len(shopReviews) > 0:
