@@ -1,10 +1,14 @@
 from extensions import db
 from jinja2 import Environment, FunctionLoader
 import bcrypt
+from sqlalchemy import select
+import csv
+from flask import url_for
 import colour
 import json
 from models import *
 from geopy.distance import geodesic
+from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 try:
     import re2 as re
 except (ImportError, ModuleNotFoundError) as e:
@@ -149,3 +153,20 @@ def getUserColorFromID(userID: str) -> str | None:
         if light < 0.4:
             light = 0.4
         return colour.hsl2hex((hue, sat, light))
+
+def add_url_params(url, params):
+    url_parts = list(urlsplit(url))
+    query = dict(parse_qsl(url_parts[3]))
+    query.update(params)
+    url_parts[3] = urlencode(query)
+    return urlunsplit(url_parts)
+
+def is_admin(db: db.session, userID: str) -> bool:
+    with open('mod.csv', mode='r') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            if userID in row:
+                return True
+        return False
+def get_reports(db: db.session) -> [ReportItem]:
+    return db.scalars(select(ReportItem)).all()

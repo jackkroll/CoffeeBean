@@ -11,7 +11,7 @@ from flask_cors import CORS
 import os
 from dotenv import load_dotenv
 from flask_login import login_user, current_user, logout_user, login_required
-
+from urllib.parse import urljoin
 load_dotenv()
 app = Flask(__name__, template_folder='doc')
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///project.db"
@@ -47,6 +47,7 @@ def landing_page():
 @app.route("/shop")
 def shops():
     shopID = request.args.get("shopID")
+    print(shopID)
     if not shopID:
         output = ""
         shops : [Shop] = fetchAllShops(db.session())
@@ -62,8 +63,9 @@ def shops():
             avgList = dict()
             reviewType = "bitterness"
             for item in shopItems:
-                avgList[item] = getItemAverageRating(item, reviewType)
-            return render_template("viewshop.html", shop = shop, shopItems = shopItems, avgList = avgList)
+                avgList[item] = getItemAverageRating(item, reviewType)            
+            status = request.args.get("status")
+            return render_template("viewshop.html", shop = shop, shopItems = shopItems, avgList = avgList, status = status)
 
 @app.route("/")
 def map():
@@ -83,7 +85,8 @@ def review(shopID):
         return Response("Item and Shop Mismatch", status=400, mimetype='application/json')
     shopReviews = fetchFieldsFor(db.session, shopId = shop.id, itemId= item.id, type = "bitterness")
     distribution, avg, revCount = getReviewStatistics(shopReviews)
-    return render_template("review.html", item = item, shop = shop, shopReviews = shopReviews, averageRating = avg, dist = distribution, revCount = revCount)
+    status = request.args.get("status")
+    return render_template("review.html", item = item, shop = shop, shopReviews = shopReviews, averageRating = avg, dist = distribution, revCount = revCount, status=status)
 
 @app.route("/review", methods=["POST"])
 @login_required
@@ -317,6 +320,42 @@ def logout():
 @login_required
 def protected():
     return "logged in as:" + flask_login.current_user.id
+
+@app.route("/report", methods = ["POST"])
+@login_required
+def report():
+    returnTo = request.form.get("returnTo")
+    contentID = request.form.get("contentID")
+    contentType = request.form.get("contentType")
+    reporterID = current_user.id
+    comment = request.form.get("comment")
+    report = ReportItem.fromStrings(contentID, contentType, reporterID, comment)
+    db.session.add(report)
+    db.session.commit()
+    if returnTo is None:
+        return redirect(url_for("map"))
+    else:
+        status = {"status":"Report Successfully Submitted"}
+        newReturnTo = add_url_params(returnTo, status)
+        return redirect(newReturnTo)
+
+@app.route("/reports", methods = ["GET", "POST"])
+@login_required
+def viewReports():
+    if not is_admin(db.session, current_user.id):
+        return redirect(url_for("map"))
+    if request.method == "GET":
+        return render_template("reports.html", reports=get_reports(db.session))
+    else:
+        reportID = request.form.get("reportID")
+        verdict = request.form.get("verdict")
+        report = db.session.get(ReportItem, reportID)
+        if verdict == "remove":
+            db.session.delete(report.contentObj())
+        db.session.delete(report)
+        db.session.commit()
+        return redirect(url_for("viewReports"))
+
 
 @app.errorhandler(401)
 def unauthorized_page(e):

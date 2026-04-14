@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>View Reports</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+{% include 'header.html' %}
+{% if reports|length == 0 %}
+    <p class="p-3 text-lg">No reports outstanding!</p>
+{% endif %}
+{% for report in reports %}
+    <div class = "p-3 m-3 w-fit bg-gray-300 rounded-2xl">
+    {% if report.contentType.name == "SHOP" %}
+        <h4>SHOP | {{ report.contentObj().name }} </h4>
+        <p>ID: {{report.contentID}}</p>
+        <a href='{{url_for("shops", shopID = report.contentID)}}' class="text-blue-700">URL to Shop</a>
+    {% elif report.contentType.name == "ITEM" %}
+        <h4>ITEM | {{report.contentObj().name}}</h4>
+        <p>ID: {{report.contentID}}</p>
+        <a href='{{url_for("review", shopID = report.contentObj().fetchShop().id, itemID = report.contentID)}}' class="text-blue-700">URL to Item</a>
+    {% elif report.contentType.name == "REVIEW" %}
+        <h4>REVIEW</h4>
+        <p>ID: {{report.contentID}}</p>
+        <p>Poster: {{report.contentObj().fetchPoster().username}}</p>
+        <a href='{{url_for("review", shopID = report.contentObj().fetchShop().id, itemID = report.contentObj().fetchItem().id)}}' class="text-blue-700">URL to Item Reviews</a>
+    {% elif report.contentType.name == "USER" %}
+        <h4>USER | {{report.contentObj().name}}</h4>
+        <p>ID: {{report.contentID}}</p>
+    {% elif report.contentType.name == "OTHER" %}
+        <h4>OTHER</h4>
+        <p>ID: {{report.contentID}}</p>
+        <p>Report Comment: {{report.comment}}</p>
+    {% endif %}
+<form method = "POST">
+    <input type="hidden" name="reportID" value="{{report.id}}">
+    <input type="hidden" name="verdict" value="remove">
+    <input type="submit" value="Delete Item" class = "p-2 bg-red-600 text-white rounded-2xl w-full mt-5">
+</form>
+        <form method = "POST">
+    <input type="hidden" name="reportID" value="{{report.id}}">
+    <input type="hidden" name="verdict" value="invalid-report">
+    <input type="submit" value="Delete Report" class = "p-2 bg-green-600 text-white rounded-2xl w-full mt-5">
+</form>
+    </div>
+{% endfor %}
+</body>
+</html>

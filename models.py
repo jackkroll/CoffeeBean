@@ -1,12 +1,13 @@
 import uuid
-
+import enum
 import bcrypt
 import flask_login
+from flask import url_for
 from flask_login import login_manager
 from datetime import datetime
 from xmlrpc.client import DateTime
 from flask_sqlalchemy import SQLAlchemy
-from typing import Optional, Self
+from typing import Optional, Self, Literal
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 from extensions import db
@@ -82,6 +83,12 @@ class Review(db.Model):
         self.attributedShopID = attributedShopID
         self.attributedItemID = attributedItemID
 
+    def fetchShop(self):
+        return db.session.get(Shop, self.attributedShopID)
+    def fetchItem(self):
+        return db.session.get(Item, self.attributedItemID)
+    def fetchPoster(self):
+        return db.session.get(User, self.posterID)
     def fetchReviewFields(self, db: db.session):
         return db.query(ReviewField).filter(ReviewField.parentID == self.id)
 
@@ -137,7 +144,10 @@ class Item(db.Model):
         self.posterID = posterID
         self.shopID = shopID
         self.price = price
-
+    def fetchShop(self):
+        return db.session.get(Shop, self.shopID)
+    def fetchPoster(self):
+        return db.session.get(User, self.posterID)
     @classmethod
     def fromStrings(self, shopID: str, name: str, price: str, posterID: str | None = None) -> Self | None:
         if shopID == "" or name == "":
@@ -149,3 +159,52 @@ class Item(db.Model):
             if price < 0:
                 return None
         return Item(shopID=shopID, name=name, price=price, posterID=posterID)
+
+class ReportType(enum.Enum):
+    SHOP = "shop"
+    ITEM = "item"
+    REVIEW = "review"
+    USER = "user"
+    OTHER = "other"
+class ReportItem(db.Model):
+    id: Mapped[str] = mapped_column(primary_key=True)
+    contentID: Mapped[Optional[str]]
+    contentType: Mapped[ReportType]
+    reporterID: Mapped[str] = mapped_column(ForeignKey('user.id'))
+    comment: Mapped[Optional[str]]
+    reportDate: Mapped[float]
+
+    def contentObj(self) -> str | None:
+        #SHOP = "shop"
+        #ITEM = "item"
+        #REVIEW = "review"
+        #USER = "user"
+        #OTHER = "other"
+        match self.contentType:
+            case ReportType.SHOP:
+                return db.session.get(Shop, self.contentID)
+            case ReportType.ITEM:
+                return db.session.get(Item, self.contentID)
+            case ReportType.REVIEW:
+                return db.session.get(Review, self.contentID)
+            case ReportType.USER:
+                return db.session.get(User, self.contentID)
+            case ReportType.OTHER:
+                return None
+
+    def __init__(self, contentID: str, contentType: type(ReportType.OTHER), reporterID: str, comment: str | None):
+        self.id = str(uuid.uuid4())
+        self.contentID = contentID
+        self.contentType = contentType
+        self.reporterID = reporterID
+        self.reportDate = datetime.now().timestamp()
+
+    @classmethod
+    def fromStrings(self, contentID: str, contentType: str, reporterID: str, comment: str | None) -> Self | None:
+        if contentID == "" or contentType == "":
+            return None
+        try:
+            contentType = ReportType(contentType)
+        except ValueError:
+            return None
+        return ReportItem(contentID, contentType, reporterID, comment)
