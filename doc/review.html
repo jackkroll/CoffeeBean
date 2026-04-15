@@ -92,7 +92,7 @@
             {% if status is none %}
             <form action="/report" method="POST" class="bg-amber-800 w-fit text-white font-bold p-3 rounded-xl">
                 <input type="hidden" value="{{ review.parentID }}" name="contentID">
-                <input type="hidden" name="returnTo" value="{{ request.url }}">
+                <input type="hidden" class="returnto" name="returnTo" value="{{ request.url }}">
                 <input type="hidden" value="review" name="contentType">
                 <input type="submit" value="Report Review">
             </form>
@@ -115,6 +115,7 @@
             <form class= "w-full" action="/review" method="POST">
                 <input type="hidden" id="shopID" name="shopID" value="{{ shop.id }}">
                 <input type="hidden" id="itemID" name="itemID" value="{{ item.id }}">
+                <input type="hidden" name="returnTo" value="{{ request.url }}">
                 <div class="text-start m-auto w-full">
                     <label for="value" class="text-md">Bitterness Ranking:</label>
                 </div>
@@ -151,6 +152,8 @@
     document.getElementById('modal').classList.add('hidden');
     document.getElementById('modal').classList.remove('flex');
   }
+
+
 </script>
 </body>
 </html>
