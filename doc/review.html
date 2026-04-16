@@ -21,7 +21,11 @@
         }
     </style>
 </head>
-<body class="bg-gray-200 p-2 flex flex-col items-stretch justify-center min-h-screen w-full max-w-3xl mx-auto">
+<body class="bg-gray-200 p-2 flex flex-col items-stretch justify-center min-h-screen w-full max-w-3xl mx-auto">"
+    <div class="fixed top-4 left-4 flex gap-2 z-50">
+        <a href="/" class="bg-amber-700 text-white px-3 py-2 rounded-lg"> ← Map </a>
+        <a href="/shop?shopID={{ shop.id }}" class="bg-amber-700 text-white px-3 py-2 rounded-lg"> ← Shop </a>
+    </div>
     <div class="flex flex-col gap-x-3 w-full min-h-sm items-stretch justify-center sm:flex-row">
   <div id="title" class="bg-white rounded-2xl p-8 flex flex-col text-center items-center justify-center md:w-1/3 sm:w-full">
         <h2 class="text-xl font-bold">BeanRatings for {{ item.name }}</h2>
