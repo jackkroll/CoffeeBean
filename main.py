@@ -359,6 +359,13 @@ def viewReports():
 
 @app.errorhandler(401)
 def unauthorized_page(e):
+    returnTo = request.form.get("returnTo")
+    print(returnTo)
+    if returnTo is not None:
+        return (render_template("401.html",
+                           loginURL = url_for("login", returnTo = returnTo),
+                           signupURL = url_for("create_account", returnTo = returnTo)),
+            401)
     return (render_template("401.html",
                            loginURL = url_for("login", returnTo = request.url),
                            signupURL = url_for("create_account", returnTo = request.url)),
